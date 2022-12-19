@@ -20,8 +20,8 @@ type MongoInstance struct {
 var MG MongoInstance
 
 func Connect() {
-	dbName := os.Getenv("DBNAME")
-	uri := os.Getenv("DATABASE_URI") + dbName
+
+	uri := os.Getenv("DATABASE_URI")
 
 	if uri := os.Getenv("DATABASE_URI"); uri == "" {
 		log.Fatal("You must set your 'DATABASE_URI' environmental variable. ")
@@ -42,7 +42,7 @@ func Connect() {
 		panic(err)
 	}
 
-	db := client.Database(dbName)
+	db := client.Database("eli5")
 	MG = MongoInstance{
 		Client: client,
 		Db:     db,
