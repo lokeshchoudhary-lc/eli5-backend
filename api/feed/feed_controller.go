@@ -5,7 +5,6 @@ import (
 	"eli5/api/user"
 	"eli5/config/database"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -69,29 +68,23 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 	}
 
 	var data []feed = make([]feed, 0)
-	var wg sync.WaitGroup
 
 	for _, tag := range tags {
-		wg.Add(1)
 
-		go func(tag string) {
-			defer wg.Done()
-			var feed feed
-			query = bson.D{{Key: "choosen", Value: true}, {Key: "tag", Value: tag}}
-			feed.Tag = tag
-			err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&feed.Question)
-			if err != nil {
-				if err == mongo.ErrNoDocuments {
-					return
-				}
-				return
+		var feed feed
+		query = bson.D{{Key: "choosen", Value: true}, {Key: "tag", Value: tag.Tag}}
+		feed.Tag = tag.Tag
+		err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&feed.Question)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return c.Status(500).SendString(err.Error())
 			}
-			data = append(data, feed)
-
-		}(tag.Tag)
+			return c.Status(500).SendString(err.Error())
+		}
+		data = append(data, feed)
 
 	}
-	wg.Wait()
+
 	if len(data) == 0 {
 		return c.Status(500).SendString("No Data Found")
 	}
