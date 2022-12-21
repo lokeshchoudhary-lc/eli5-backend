@@ -1,0 +1,3 @@
+backend.eli5.club {
+        reverse_proxy :8080
+}
