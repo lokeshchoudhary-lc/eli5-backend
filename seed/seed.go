@@ -50,8 +50,8 @@ func SeedDatabase() {
 	q5.Choosen = true
 	q5.Tag = "php"
 
-	database.MG.Db.Collection("questions").Drop(context.Background())
-	database.MG.Db.Collection("tags").Drop(context.Background())
+	// database.MG.Db.Collection("questions").Drop(context.Background())
+	// database.MG.Db.Collection("tags").Drop(context.Background())
 
 	database.MG.Db.Collection("tags").InsertOne(context.TODO(), tag)
 	database.MG.Db.Collection("tags").InsertOne(context.TODO(), tag1)

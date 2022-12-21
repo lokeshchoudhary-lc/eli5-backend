@@ -50,7 +50,7 @@ func GetAnswers(c *fiber.Ctx) error {
 
 	if sortOrder := c.Query("sort"); sortOrder == "lastest" {
 		query = bson.D{{Key: "questionId", Value: questionId}}
-		opts.SetSort(bson.D{{Key: "createdAt", Value: 1}})
+		opts.SetSort(bson.D{{Key: "createdAt", Value: -1}})
 	}
 	if sortOrder := c.Query("sort"); sortOrder == "trending" {
 		query = bson.D{{Key: "questionId", Value: questionId}}
@@ -166,8 +166,8 @@ func PostAnswer(c *fiber.Ctx) error {
 	currStreakTime := time.Now().Unix()
 
 	type data struct {
-		streak         int64
-		prevStreakTime int64
+		Streak         int64 `json:"streak" bson:"streak"`
+		PrevStreakTime int64 `json:"prevStreakTime,omitempty" bson:"prevStreakTime,omitempty"`
 	}
 	var info data
 
@@ -177,36 +177,46 @@ func PostAnswer(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
-	if info.streak == 0 {
-		info.streak = 1
-		info.prevStreakTime = currStreakTime
+	if info.Streak == 0 {
+		info.Streak = 1
+		info.PrevStreakTime = currStreakTime
+
+		//update value of streak with userId in users
+		query = bson.D{{Key: "_id", Value: id}}
+		updateQuery = bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: info.Streak}, {Key: "prevStreakTime", Value: info.PrevStreakTime}}}}
+		_, err = database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
+		if err != nil {
+			return c.Status(500).SendString(err.Error())
+		}
 	}
+
 	var limit24 int64 = 86400
 	var limit48 int64 = 172800
 
-	if (currStreakTime - info.prevStreakTime) < limit24 {
+	if (currStreakTime - info.PrevStreakTime) < limit24 {
 
-		return c.Status(201).JSON(&fiber.Map{"streak": info.streak, "userAnswer": createdAnswer})
+		return c.Status(201).JSON(&fiber.Map{"streak": info.Streak, "userAnswer": createdAnswer})
 
-	} else if (currStreakTime - info.prevStreakTime) < limit48 {
-		info.prevStreakTime = currStreakTime
-		info.streak++
+	} else if (currStreakTime - info.PrevStreakTime) < limit48 {
+		info.PrevStreakTime = currStreakTime
+		info.Streak = info.Streak + 1
 	}
 	//update value of streak with userId in users
 	query = bson.D{{Key: "_id", Value: id}}
-	updateQuery = bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: info.streak}, {Key: "prevStreakTime", Value: info.prevStreakTime}}}}
+	updateQuery = bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: info.Streak}, {Key: "prevStreakTime", Value: info.PrevStreakTime}}}}
 	_, err = database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	return c.Status(201).JSON(&fiber.Map{"streak": info.streak, "userAnswer": createdAnswer})
+	return c.Status(201).JSON(&fiber.Map{"streak": info.Streak, "userAnswer": createdAnswer})
 
 }
 
 func LikeAnwer(c *fiber.Ctx) error {
 
 	answerId := c.Params("answerId")
+	answeredBy := c.Params("answeredBy")
 	//userId will taken from body
 	userId := c.Locals("userId").(string)
 	//put answerId into db with userId
@@ -218,15 +228,14 @@ func LikeAnwer(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	ansId, _ := primitive.ObjectIDFromHex(answerId)
 	//increse likeNumber with answerId
+	ansId, _ := primitive.ObjectIDFromHex(answerId)
 	query := bson.D{{Key: "_id", Value: ansId}}
 	updateQuery := bson.D{{Key: "$inc", Value: bson.D{{Key: "likeNumber", Value: 1}}}}
 	database.MG.Db.Collection("answers").UpdateOne(c.Context(), query, updateQuery)
 
-	//increase totalLikes with userId in user model
-	id, _ := primitive.ObjectIDFromHex(userId)
-	query = bson.D{{Key: "_id", Value: id}}
+	//increase totalLikes with answeredBy in user model
+	query = bson.D{{Key: "answeredBy", Value: answeredBy}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: 1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
 	if err != nil {
@@ -237,6 +246,8 @@ func LikeAnwer(c *fiber.Ctx) error {
 }
 
 func CancelLike(c *fiber.Ctx) error {
+
+	answeredBy := c.Params("answeredBy")
 	answerId := c.Params("answerId")
 	//userId will taken from body
 	userId := c.Locals("userId").(string)
@@ -247,8 +258,8 @@ func CancelLike(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	ansId, _ := primitive.ObjectIDFromHex(answerId)
 	//decrease likeNumber with answerId
+	ansId, _ := primitive.ObjectIDFromHex(answerId)
 	query = bson.D{{Key: "_id", Value: ansId}}
 	updateQuery := bson.D{{Key: "$inc", Value: bson.D{{Key: "likeNumber", Value: -1}}}}
 	database.MG.Db.Collection("answers").UpdateOne(c.Context(), query, updateQuery)
@@ -256,9 +267,8 @@ func CancelLike(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	//decrease totalLikes with userId in user model
-	id, _ := primitive.ObjectIDFromHex(userId)
-	query = bson.D{{Key: "_id", Value: id}}
+	//decrease totalLikes with answeredBy in user model
+	query = bson.D{{Key: "answeredBy", Value: answeredBy}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: -1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
 	if err != nil {

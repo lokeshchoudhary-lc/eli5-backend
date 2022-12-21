@@ -17,7 +17,7 @@ func GetLeaderBoard(c *fiber.Ctx) error {
 
 	var data []User = make([]User, 0)
 
-	opts := options.Find().SetProjection(bson.D{{Key: "totalAnswers", Value: 1}, {Key: "totalLikes", Value: 1}, {Key: "uniqueAlias", Value: 1}, {Key: "profilePictureCode", Value: 1}}).SetSort(bson.D{{Key: "totalAnswers", Value: 1}, {Key: "totalLikes", Value: 1}}).SetLimit(100)
+	opts := options.Find().SetProjection(bson.D{{Key: "totalAnswers", Value: 1}, {Key: "totalLikes", Value: 1}, {Key: "uniqueAlias", Value: 1}, {Key: "profilePictureCode", Value: 1}}).SetSort(bson.D{{Key: "totalAnswers", Value: -1}, {Key: "totalLikes", Value: -1}}).SetLimit(100)
 	query := bson.D{{}}
 	cursor, err := database.MG.Db.Collection("users").Find(c.Context(), query, opts)
 	if err != nil {

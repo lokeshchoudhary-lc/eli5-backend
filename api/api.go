@@ -16,8 +16,8 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/userAnswer/:questionId", middleware.AuthVerify, answer.GetUserAnswer)
 	v1.Get("/answers/:questionId", middleware.AuthVerify, answer.GetAnswers) //query : sort=latest,trending,page //end of page gives status 204
 	v1.Post("/answer/:questionId", middleware.AuthVerify, answer.PostAnswer)
-	v1.Put("/like/:answerId", middleware.AuthVerify, answer.LikeAnwer)
-	v1.Put("/cancelLike/:answerId", middleware.AuthVerify, answer.CancelLike)
+	v1.Put("/like/:answerId/:answeredBy", middleware.AuthVerify, answer.LikeAnwer)
+	v1.Put("/cancelLike/:answerId/:answeredBy", middleware.AuthVerify, answer.CancelLike)
 
 	v1.Get("/leaderboard", middleware.AuthVerify, user.GetLeaderBoard)
 	v1.Post("/completeProfile", user.CompleteProfile)
