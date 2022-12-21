@@ -216,7 +216,11 @@ func PostAnswer(c *fiber.Ctx) error {
 func LikeAnwer(c *fiber.Ctx) error {
 
 	answerId := c.Params("answerId")
-	answeredBy := c.Params("answeredBy")
+	answeredBy := c.Query("answeredBy")
+	numberId := c.Query("number")
+
+	answeredBy = answeredBy + "#" + numberId
+
 	//userId will taken from body
 	userId := c.Locals("userId").(string)
 	//put answerId into db with userId
@@ -235,20 +239,20 @@ func LikeAnwer(c *fiber.Ctx) error {
 	database.MG.Db.Collection("answers").UpdateOne(c.Context(), query, updateQuery)
 
 	//increase totalLikes with answeredBy in user model
-	query = bson.D{{Key: "answeredBy", Value: answeredBy}}
+	query = bson.D{{Key: "uniqueAlias", Value: answeredBy}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: 1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
-	if err != nil {
-		return c.Status(500).SendString(err.Error())
-	}
 
 	return c.SendStatus(200)
 }
 
 func CancelLike(c *fiber.Ctx) error {
 
-	answeredBy := c.Params("answeredBy")
 	answerId := c.Params("answerId")
+	answeredBy := c.Query("answeredBy")
+	numberId := c.Query("number")
+
+	answeredBy = answeredBy + "#" + numberId
 	//userId will taken from body
 	userId := c.Locals("userId").(string)
 	//delete answerId from db with userId
@@ -268,11 +272,9 @@ func CancelLike(c *fiber.Ctx) error {
 	}
 
 	//decrease totalLikes with answeredBy in user model
-	query = bson.D{{Key: "answeredBy", Value: answeredBy}}
+	query = bson.D{{Key: "uniqueAlias", Value: answeredBy}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: -1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
-	if err != nil {
-		return c.Status(500).SendString(err.Error())
-	}
+
 	return c.SendStatus(200)
 }
