@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"time"
+	"eli5/seed"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/helmet/v2"
@@ -26,7 +27,7 @@ func setupMiddlewares(app *fiber.App) {
 
 func Create() *fiber.App {
 	database.Connect()
-	// seed.SeedDatabase()
+	seed.SeedDatabase()
 
 	readTimeoutSecondsCount, _ := strconv.Atoi(os.Getenv("SERVER_READ_TIMEOUT"))
 
