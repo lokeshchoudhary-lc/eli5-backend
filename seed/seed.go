@@ -64,4 +64,5 @@ func SeedDatabase() {
 	database.MG.Db.Collection("questions").InsertOne(context.TODO(), q3)
 	database.MG.Db.Collection("questions").InsertOne(context.TODO(), q4)
 	database.MG.Db.Collection("questions").InsertOne(context.TODO(), q5)
+
 }

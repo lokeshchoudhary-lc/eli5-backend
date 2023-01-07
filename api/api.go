@@ -3,6 +3,7 @@ package api
 import (
 	"eli5/api/answer"
 	"eli5/api/feed"
+	"eli5/api/question"
 	"eli5/api/user"
 	"eli5/middleware"
 
@@ -12,6 +13,7 @@ import (
 func SetupApiRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 	v1.Get("/feed", middleware.AuthVerify, feed.MakeHomeFeed)
+	v1.Get("/userDetails", middleware.AuthVerify, feed.GetUserDetails)
 
 	v1.Get("/userAnswer/:questionId", middleware.AuthVerify, answer.GetUserAnswer)
 	v1.Get("/answers/:questionId", middleware.AuthVerify, answer.GetAnswers) //query : sort=latest,trending,page //end of page gives status 204
@@ -23,6 +25,15 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Post("/completeProfile", user.CompleteProfile)
 	v1.Get("/userCheck/:email", user.UserCheck)
 	v1.Get("/logout", user.Logout)
+
+	// prototype stage 2
+	v1.Get("/explore", middleware.AuthVerify, question.Explore)                                // explore button (give all tags at once)
+	v1.Get("/tags", middleware.AuthVerify, question.GetTags)                                   // do pagiation on load more (query: page)
+	v1.Get("/singleQuestion/:tag", middleware.AuthVerify, question.GetQuestionOfTag)           //do pagination on load more (after explore)(query: page)
+	v1.Get("/questions/:tag", middleware.AuthVerify, question.GetQuestionsOfTag)               //do pagination on load more (after explore)(query: page)
+	v1.Get("/question/:questionId", middleware.AuthVerify, question.GetQuestionWithPagination) //get the seleted single question for feed , have query: tag,page,action: next and back for question change
+	v1.Post("/question/ask", middleware.AuthVerify, question.AskQuestion)
+
 	// v1.Get("/auth/google", user.GoogleAuth)
 	// v1.Get("/auth/google/callback", user.GoogleAuthCallback)
 	// v1.Post("/signup")
