@@ -28,7 +28,7 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 		ProfilePictureCode string `json:"profilePictureCode" bson:"profilePictureCode"`
 	}
 
-	var banner Banner
+	var banners []Banner = make([]Banner, 0)
 	var bestAnswer []answer = make([]answer, 0)
 	var topTags []string
 	var topQuestions []question.Question = make([]question.Question, 0)
@@ -123,20 +123,18 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 	bestAnswerSingle.Question = question.Question
 	bestAnswerSingle.Tag = question.Tag
 
-	//find the banner
+	//find the banners
 	query = bson.D{{Key: "choosen", Value: true}}
-	err = database.MG.Db.Collection("banners").FindOne(c.Context(), query).Decode(&banner)
+	cursor, err = database.MG.Db.Collection("banners").Find(c.Context(), query)
 	if err != nil {
-
-		if err == mongo.ErrNoDocuments {
-
-			return c.Status(500).SendString(err.Error())
-		}
+		return c.Status(500).SendString(err.Error())
+	}
+	if err := cursor.All(c.Context(), &banners); err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
 
 	return c.JSON(&fiber.Map{
-		"banner":       banner,
+		"banner":       banners,
 		"topQuestions": topQuestions,
 		"topTags":      topTags,
 		"bestAnswer":   bestAnswerSingle,
