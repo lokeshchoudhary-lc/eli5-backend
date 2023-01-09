@@ -63,15 +63,15 @@ func UserCheck(c *fiber.Ctx) error {
 			Expires:  time.Now().Add(time.Hour * 168),
 			HTTPOnly: true,
 		}
-		loginState := fiber.Cookie{
-			Name:     "loginState",
-			Value:    "true",
-			Expires:  time.Now().Add(time.Hour * 168),
-			HTTPOnly: false,
-		}
+		// loginState := fiber.Cookie{
+		// 	Name:     "loginState",
+		// 	Value:    "true",
+		// 	Expires:  time.Now().Add(time.Hour * 168),
+		// 	HTTPOnly: false,
+		// }
 		c.Cookie(&accessTokenCookie)
 		c.Cookie(&refreshTokenCookie)
-		c.Cookie(&loginState)
+		// c.Cookie(&loginState)
 
 		return c.Status(200).SendString("go_to_feed")
 	}
@@ -130,13 +130,13 @@ func CompleteProfile(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(time.Hour * 168),
 		HTTPOnly: true,
 	}
-	loginState := fiber.Cookie{
-		Name:     "loginState",
-		Value:    "true",
-		Expires:  time.Now().Add(time.Hour * 168),
-		HTTPOnly: false,
-	}
-	c.Cookie(&loginState)
+	// loginState := fiber.Cookie{
+	// 	Name:     "loginState",
+	// 	Value:    "true",
+	// 	Expires:  time.Now().Add(time.Hour * 168),
+	// 	HTTPOnly: false,
+	// }
+	// c.Cookie(&loginState)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
 
@@ -157,13 +157,13 @@ func Logout(c *fiber.Ctx) error {
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
 	}
-	loginState := fiber.Cookie{
-		Name:     "loginState",
-		Value:    "true",
-		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-		HTTPOnly: false,
-	}
-	c.Cookie(&loginState)
+	// loginState := fiber.Cookie{
+	// 	Name:     "loginState",
+	// 	Value:    "true",
+	// 	Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+	// 	HTTPOnly: false,
+	// }
+	// c.Cookie(&loginState)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
 	return c.SendStatus(200)
