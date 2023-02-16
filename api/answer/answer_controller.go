@@ -2,6 +2,7 @@ package answer
 
 import (
 	"eli5/config/database"
+	"eli5/utils"
 	"strconv"
 	"time"
 
@@ -141,6 +142,10 @@ func PostAnswer(c *fiber.Ctx) error {
 	answer.LikeNumber = 0
 	// force MongoDB to always set its own generated ObjectIDs
 	answer.Id = ""
+
+	//sanitize answer
+	html := utils.SanitizeHtml(answer.Answer)
+	answer.Answer = html
 
 	// insert the record
 	insertResult, err := database.MG.Db.Collection(collection).InsertOne(c.Context(), answer)

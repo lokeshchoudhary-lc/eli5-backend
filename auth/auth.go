@@ -5,23 +5,21 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 // ConfigGoogle to set config of oauth
-func ConfigGoogle() *oauth2.Config {
-	conf := &oauth2.Config{
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
-			"https://www.googleapis.com/auth/userinfo.profile"},
-		Endpoint: google.Endpoint,
-	}
-	return conf
-}
+// func ConfigGoogle() *oauth2.Config {
+// 	conf := &oauth2.Config{
+// 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+// 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+// 		RedirectURL:  os.Getenv("REDIRECT_URL"),
+// 		Scopes: []string{
+// 			"https://www.googleapis.com/auth/userinfo.email",
+// 			"https://www.googleapis.com/auth/userinfo.profile"},
+// 		Endpoint: google.Endpoint,
+// 	}
+// 	return conf
+// }
 
 var jwtAccessKey []byte = []byte(os.Getenv("JWT_ACCESS_KEY"))
 var jwtRefreshKey []byte = []byte(os.Getenv("JWT_REFRESH_KEY"))

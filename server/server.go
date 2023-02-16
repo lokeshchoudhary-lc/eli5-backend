@@ -21,6 +21,7 @@ import (
 func setupMiddlewares(app *fiber.App) {
 	app.Use(helmet.New())
 	app.Use(recover.New())
+	// app.Use(cors.New(cors.Config{AllowCredentials: true}))
 	app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "http://127.0.0.1:5173,http://localhost:5173,http://localhost,http://127.0.0.1"}))
 	//AllowOrigins: "https://eli5.club,https://www.eli5.club,https://backend.eli5.club"
 }
