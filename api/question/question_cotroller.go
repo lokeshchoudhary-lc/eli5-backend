@@ -10,6 +10,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetQuestion(c *fiber.Ctx) error {
+	questionId := c.Params("questionId")
+
+	id, _ := primitive.ObjectIDFromHex(questionId)
+
+	var question Question
+	query := bson.D{{Key: "_id", Value: id}}
+	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	return c.JSON(question)
+}
+
 func AskQuestion(c *fiber.Ctx) error {
 	uniqueAlias := c.Locals("uniqueAlias").(string)
 	askedQuestion := new(AskedQuestion)
@@ -95,22 +110,22 @@ func GetQuestionsOfTag(c *fiber.Ctx) error {
 	return c.JSON(questions)
 }
 
-func GetQuestionOfTag(c *fiber.Ctx) error {
-	tag := c.Params("tag")
+// func GetQuestionOfTag(c *fiber.Ctx) error {
+// 	tag := c.Params("tag")
 
-	var question Question
-	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}
-	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
+// 	var question Question
+// 	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}
+// 	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
 
-	if err != nil {
+// 	if err != nil {
 
-		return c.Status(500).SendString(err.Error())
-	}
-	return c.JSON(question)
+// 		return c.Status(500).SendString(err.Error())
+// 	}
+// 	return c.JSON(question)
 
-}
+// }
 
-func GetQuestionWithPagination(c *fiber.Ctx) error {
+func ChangeQuestionWithPagination(c *fiber.Ctx) error {
 	questionId := c.Params("questionId")
 	tag := c.Query("tag")
 

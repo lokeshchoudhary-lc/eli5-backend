@@ -42,7 +42,16 @@ func GetUserAnswer(c *fiber.Ctx) error {
 
 func GetAnswers(c *fiber.Ctx) error {
 
-	var userId string = c.Locals("userId").(string)
+	// fmt.Printf("Interface type: %T\n", c.Locals("userId"))
+	// fmt.Printf("Interface value: %v\n", c.Locals("userId"))
+	// fmt.Printf("Interface is nil: %t\n", c.Locals("userId") == nil)
+	var userId string
+	if c.Locals("userId") != nil {
+		userId = c.Locals("userId").(string)
+	} else {
+		userId = ""
+	}
+
 	var query bson.D
 	opts := options.Find()
 
@@ -89,16 +98,21 @@ func GetAnswers(c *fiber.Ctx) error {
 		return c.SendStatus(204)
 	}
 
-	// toggle like for each answer and find user profilePictureCode
+	// toggle like for each answer (only toggle like when user logged in) and find user profilePictureCode
 	for i, answer := range answers {
 		//should i use concurrency here ?
-		query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "userId", Value: userId}}, bson.D{{Key: "answerId", Value: answer.Id}}}}}
-		result := database.MG.Db.Collection("likes").FindOne(c.Context(), query)
-		if result.Err() == nil {
-			answers[i].Liked = true
-		} else {
-			answers[i].Liked = false
+		//check for userId , if present
+		if userId == "" {
+			query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "userId", Value: userId}}, bson.D{{Key: "answerId", Value: answer.Id}}}}}
+			result := database.MG.Db.Collection("likes").FindOne(c.Context(), query)
+			if result.Err() == nil {
+				answers[i].Liked = true
+			} else {
+				answers[i].Liked = false
+			}
 		}
+		//give every answer liked as false to guest render of answers
+		answers[i].Liked = false
 		type ppc struct {
 			ProfilePictureCode string `json:"profilePictureCode" bson:"profilePictureCode"`
 		}
