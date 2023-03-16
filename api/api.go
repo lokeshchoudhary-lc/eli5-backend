@@ -23,7 +23,7 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/changeQuestion/:questionId", question.ChangeQuestionWithPagination) //get the seleted single question for feed , have query: tag,page,action: next and back for question change
 	v1.Get("/answers/:questionId", answer.GetAnswers)                            //query : sort=latest,trending,page //end of page gives status 204
 	v1.Get("/feed", feed.MakeHomeFeed)
-
+	v1.Post("/completeProfile", user.CompleteProfile)
 	v1.Get("/userCheck/:email", user.UserCheck)
 
 	//sse routes and login only
@@ -35,12 +35,13 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Put("/like/:answerId", middleware.AuthVerify, answer.LikeAnwer)
 	v1.Put("/cancelLike/:answerId", middleware.AuthVerify, answer.CancelLike)
 	v1.Post("/question/ask", middleware.AuthVerify, question.AskQuestion)
+	v1.Get("/userDetails", middleware.AuthVerify, feed.GetUserDetails)
+	v1.Get("/userAnswer/:questionId", middleware.AuthVerify, answer.GetUserAnswer)
+	v1.Get("/logout", user.Logout)
 
 	// v1.Get("/singleQuestion/:tag", question.GetQuestionOfTag)           //do pagination on load more (after explore)(query: page)
 	// v1.Get("/feed", middleware.AuthVerify, feed.MakeHomeFeed)
-	// v1.Get("/userDetails", middleware.AuthVerify, feed.GetUserDetails)
 
-	// v1.Get("/userAnswer/:questionId", middleware.AuthVerify, answer.GetUserAnswer)
 	// v1.Post("/answer/:questionId", middleware.AuthVerify, answer.PostAnswer)
 	// v1.Put("/like/:answerId", middleware.AuthVerify, answer.LikeAnwer)
 	// v1.Put("/cancelLike/:answerId", middleware.AuthVerify, answer.CancelLike)
@@ -48,7 +49,6 @@ func SetupApiRoutes(app *fiber.App) {
 	// v1.Get("/leaderboard", middleware.AuthVerify, user.GetLeaderBoard)
 	// v1.Post("/completeProfile", user.CompleteProfile)
 	// v1.Get("/userCheck/:email", user.UserCheck)
-	// v1.Get("/logout", user.Logout)
 
 	// prototype stage 2
 	// v1.Get("/explore", middleware.AuthVerify, question.Explore)                                // explore button (give all tags at once)

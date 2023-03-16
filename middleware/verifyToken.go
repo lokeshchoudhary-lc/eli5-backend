@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"eli5/auth"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,9 +27,10 @@ func AuthVerify(c *fiber.Ctx) error {
 			return c.Status(500).SendString(err.Error())
 		}
 		accessTokenCookie := fiber.Cookie{
-			Name:     "accessToken",
-			Value:    accessToken,
-			Expires:  time.Now().Add(time.Minute * 15),
+			Name:   "accessToken",
+			Value:  accessToken,
+			MaxAge: 60 * 15,
+			// Expires:  time.Now().Add(time.Minute * 15),
 			HTTPOnly: true,
 		}
 		c.Cookie(&accessTokenCookie)

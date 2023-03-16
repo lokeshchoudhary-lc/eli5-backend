@@ -45,22 +45,22 @@ func UserCheck(c *fiber.Ctx) error {
 			return c.Status(500).SendString(err.Error())
 		}
 		accessTokenCookie := fiber.Cookie{
-			Name:     "accessToken",
-			Value:    accessToken,
-			Expires:  time.Now().Add(time.Minute * 15),
+			Name:  "accessToken",
+			Value: accessToken,
+			// Expires:  time.Now().Add(time.Minute * 15),
+			MaxAge:   60 * 15,
 			HTTPOnly: true,
 		}
 
 		refreshToken, err := auth.CreateRefreshToken(userCheck.Id, userCheck.UniqueAlias)
 		if err != nil {
-			fmt.Println("2")
-
 			return c.Status(500).SendString(err.Error())
 		}
 		refreshTokenCookie := fiber.Cookie{
-			Name:     "refreshToken",
-			Value:    refreshToken,
-			Expires:  time.Now().Add(time.Hour * 168),
+			Name:  "refreshToken",
+			Value: refreshToken,
+			// Expires:  time.Now().Add(time.Hour * 168),
+			MaxAge:   60 * 60 * 24 * 7,
 			HTTPOnly: true,
 		}
 		// loginState := fiber.Cookie{
@@ -114,9 +114,10 @@ func CompleteProfile(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 	accessTokenCookie := fiber.Cookie{
-		Name:     "accessToken",
-		Value:    accessToken,
-		Expires:  time.Now().Add(time.Minute * 15),
+		Name:  "accessToken",
+		Value: accessToken,
+		// Expires:  time.Now().Add(time.Minute * 15),
+		MaxAge:   60 * 15,
 		HTTPOnly: true,
 	}
 
@@ -125,9 +126,10 @@ func CompleteProfile(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 	refreshTokenCookie := fiber.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Hour * 168),
+		Name:  "refreshToken",
+		Value: refreshToken,
+		// Expires:  time.Now().Add(time.Hour * 168),
+		MaxAge:   60 * 60 * 24 * 7,
 		HTTPOnly: true,
 	}
 	// loginState := fiber.Cookie{
