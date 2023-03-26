@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"eli5/auth"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -9,6 +10,9 @@ import (
 func AuthVerify(c *fiber.Ctx) error {
 	accessTokenCookie := c.Cookies("accessToken")
 	refreshTokenCookie := c.Cookies("refreshToken")
+	loginState := c.Cookies("loginState1")
+
+	log.Println(loginState, "login state cookie")
 
 	if accessTokenCookie == "" {
 		//
