@@ -19,7 +19,7 @@ type MongoInstance struct {
 
 var MG MongoInstance
 
-func Connect() {
+func ConnectMongo() {
 
 	uri := os.Getenv("DATABASE_URI")
 

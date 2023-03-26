@@ -172,11 +172,18 @@ func GetUserDetails(c *fiber.Ctx) error {
 		}
 	}
 
+	// userRank, err := database.Redis.Client.ZRevRank(c.Context(), "leaderboard", userId).Result()
+	// if err == redis.Nil {
+	// 	// this means we didn't got an data from redis and send user -1 to signal no data
+	// 	userRank = -1
+	// }
 	return c.JSON(&fiber.Map{
+		"userId":             userId,
 		"firstName":          user.FirstName,
 		"profilePictureCode": user.ProfilePictureCode,
 		"streak":             user.Streak,
 		"totalLikes":         user.TotalLikes,
 		"totalAnswers":       user.TotalAnswers,
+		// "rank":               userRank,
 	})
 }

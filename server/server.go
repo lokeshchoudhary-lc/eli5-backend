@@ -21,13 +21,16 @@ import (
 func setupMiddlewares(app *fiber.App) {
 	app.Use(helmet.New())
 	app.Use(recover.New())
-	// app.Use(cors.New(cors.Config{AllowCredentials: true}))
-	app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "http://127.0.0.1:5173,http://localhost:5173,http://localhost,http://127.0.0.1"}))
+	// app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "*"}))
+	app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "http://localhost:3000,http://127.0.0.1:5173,http://localhost:5173,http://localhost,http://127.0.0.1"}))
 	//AllowOrigins: "https://eli5.club,https://www.eli5.club,https://backend.eli5.club"
 }
 
 func Create() *fiber.App {
-	database.Connect()
+
+	// database.ConnectRedis()
+
+	database.ConnectMongo()
 	// seed.SeedDatabase()
 
 	readTimeoutSecondsCount, _ := strconv.Atoi(os.Getenv("SERVER_READ_TIMEOUT"))
@@ -35,19 +38,6 @@ func Create() *fiber.App {
 	app := fiber.New(fiber.Config{
 		ReadTimeout: time.Second * time.Duration(readTimeoutSecondsCount),
 	})
-
-	// app := fiber.New(fiber.Config{
-	// 	// Override default error handler
-	// 	ErrorHandler: func(ctx *fiber.Ctx, err error) error {
-	// 		if e, ok := err.(*utils.Error); ok {
-	// 			return ctx.Status(e.Status).JSON(e)
-	// 		} else if e, ok := err.(*fiber.Error); ok {
-	// 			return ctx.Status(e.Code).JSON(utils.Error{Status: e.Code, Code: "internal-server", Message: e.Message})
-	// 		} else {
-	// 			return ctx.Status(500).JSON(utils.Error{Status: 500, Code: "internal-server", Message: err.Error()})
-	// 		}
-	// 	},
-	// })
 
 	setupMiddlewares(app)
 
@@ -70,7 +60,7 @@ func Listen(app *fiber.App) {
 		<-sigint
 
 		// Received an interrupt signal, shutdown.
-		if err := app.Shutdown(); err != nil {
+		if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
 			// Error from closing listeners, or context timeout:
 			log.Printf("Oops... Server is not shutting down! Reason: %v", err)
 		}

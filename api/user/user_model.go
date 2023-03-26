@@ -7,11 +7,11 @@ type User struct {
 	Email              string `json:"email,omitempty" bson:"email,omitempty"`
 	ProfilePictureCode string `json:"profilePictureCode,omitempty" bson:"profilePictureCode,omitempty"`
 	Streak             int64  `json:"streak" bson:"streak"`
-	Rank               int64  `json:"rank" bson:"rank"`
-	TotalAnswers       int64  `json:"totalAnswers" bson:"totalAnswers"`
-	TotalLikes         int64  `json:"totalLikes" bson:"totalLikes"`
-	CreatedAt          int64  `json:"createdAt,omitempty" bson:"createdAt,omitempty"`
-	PrevStreakTime     int64  `json:"prevStreakTime,omitempty" bson:"prevStreakTime,omitempty"`
+	// Score              int64  `json:"score" bson:"score"`
+	TotalAnswers   int64 `json:"totalAnswers" bson:"totalAnswers"`
+	TotalLikes     int64 `json:"totalLikes" bson:"totalLikes"`
+	CreatedAt      int64 `json:"createdAt,omitempty" bson:"createdAt,omitempty"`
+	PrevStreakTime int64 `json:"prevStreakTime,omitempty" bson:"prevStreakTime,omitempty"`
 }
 
 //make index on uniqueAlias (future)

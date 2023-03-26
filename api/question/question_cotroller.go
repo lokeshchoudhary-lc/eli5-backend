@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -41,6 +42,40 @@ func AskQuestion(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(200)
+}
+
+func TagsPageStats(c *fiber.Ctx) error {
+	tag := c.Params("tag")
+
+	type count struct {
+		LikeCount   int `json:"likeCount" bson:"likeCount"`
+		AnswerCount int `json:"answerCount" bson:"answerCount"`
+	}
+
+	var tagCount []count
+
+	matchStage := bson.D{
+		{Key: "$match", Value: bson.D{
+			{Key: "tag", Value: tag},
+		}}}
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: "$tag"},
+			{Key: "likeCount", Value: bson.D{{Key: "$sum", Value: "$likeNumber"}}},
+			{Key: "answerCount", Value: bson.D{{Key: "$count", Value: bson.D{}}}},
+		}}}
+
+	cursor, err := database.MG.Db.Collection("answers").Aggregate(c.Context(), mongo.Pipeline{matchStage, groupStage})
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	if err := cursor.All(c.Context(), &tagCount); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	return c.JSON(tagCount[0])
 }
 
 func Explore(c *fiber.Ctx) error {

@@ -94,7 +94,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 
 	user.CreatedAt = time.Now().Unix()
 	user.Id = ""
-	user.Rank = 0
+	// user.Score = 0
 	user.Streak = 0
 	user.TotalAnswers = 0
 	user.TotalLikes = 0
@@ -106,6 +106,8 @@ func CompleteProfile(c *fiber.Ctx) error {
 
 	userId := insertedResult.InsertedID.(primitive.ObjectID).Hex()
 	uniqueAlias := user.UniqueAlias
+
+	// database.Redis.Client.ZAdd(c.Context(), "leaderboard", redis.Z{Score: float64(user.Score), Member: userId})
 
 	accessToken, err := auth.CreateAccessToken(userId, uniqueAlias)
 	if err != nil {
@@ -147,6 +149,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 }
 
 func Logout(c *fiber.Ctx) error {
+
 	accessTokenCookie := fiber.Cookie{
 		Name:     "accessToken",
 		Value:    "",
@@ -170,76 +173,3 @@ func Logout(c *fiber.Ctx) error {
 	c.Cookie(&refreshTokenCookie)
 	return c.SendStatus(200)
 }
-
-// func GoogleAuth(c *fiber.Ctx) error {
-// 	path := auth.ConfigGoogle()
-// 	url := path.AuthCodeURL("state")
-// 	return c.Redirect(url)
-
-// }
-
-// func GoogleAuthCallback(c *fiber.Ctx) error {
-// 	token, error := auth.ConfigGoogle().Exchange(c.Context(), c.FormValue("code"))
-// 	if error != nil {
-// 		return c.Status(500).SendString(error.Error())
-// 	}
-
-// 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
-// 	if err != nil {
-// 		return c.Status(500).SendString(error.Error())
-// 	}
-
-// 	defer response.Body.Close()
-// 	contents, err := io.ReadAll(response.Body)
-// 	if err != nil {
-// 		return c.Status(500).SendString(err.Error())
-// 	}
-// 	type GoogleResponse struct {
-// 		Email string `json:"email" `
-// 		Name  string `json:"name" `
-// 	}
-
-// 	var data GoogleResponse
-// 	errorz := json.Unmarshal(contents, &data)
-// 	if errorz != nil {
-// 		return c.Status(500).SendString(errorz.Error())
-// 	}
-
-// 	words := strings.Fields(data.Name)
-// 	data.Name = words[0]
-
-// 	userCheck := new(User)
-// 	query := bson.D{{Key: "email", Value: data.Email}}
-// 	err = database.MG.Db.Collection("users").FindOne(c.Context(), query).Decode(&userCheck)
-
-// 	if err != nil {
-
-// 		accessToken, err := auth.CreateAccessToken(userCheck.Id, userCheck.UniqueAlias)
-// 		if err != nil {
-// 			return c.Status(500).SendString(err.Error())
-// 		}
-// 		accessTokenCookie := fiber.Cookie{
-// 			Name:     "accessToken",
-// 			Value:    accessToken,
-// 			Expires:  time.Now().Add(time.Minute * 15),
-// 			HTTPOnly: true,
-// 		}
-
-// 		refreshToken, err := auth.CreateRefreshToken(userCheck.Id, userCheck.UniqueAlias)
-// 		if err != nil {
-// 			return c.Status(500).SendString(err.Error())
-// 		}
-// 		refreshTokenCookie := fiber.Cookie{
-// 			Name:     "refreshToken",
-// 			Value:    refreshToken,
-// 			Expires:  time.Now().Add(time.Hour * 168),
-// 			HTTPOnly: true,
-// 		}
-// 		c.Cookie(&accessTokenCookie)
-// 		c.Cookie(&refreshTokenCookie)
-
-// 		return c.Status(200).SendString("go_to_feed")
-// 	}
-
-// 	return c.Status(200).JSON(data)
-// }
