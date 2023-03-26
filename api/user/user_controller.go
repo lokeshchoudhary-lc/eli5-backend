@@ -45,8 +45,11 @@ func UserCheck(c *fiber.Ctx) error {
 			return c.Status(500).SendString(err.Error())
 		}
 		accessTokenCookie := fiber.Cookie{
-			Name:  "accessToken",
-			Value: accessToken,
+			Name:     "accessToken",
+			Value:    accessToken,
+			Domain:   "eli5.club",
+			SameSite: "none",
+			Secure:   true,
 			// Expires:  time.Now().Add(time.Minute * 15),
 			MaxAge:   60 * 15,
 			HTTPOnly: true,
