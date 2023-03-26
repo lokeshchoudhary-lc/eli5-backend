@@ -13,6 +13,8 @@ func AuthVerify(c *fiber.Ctx) error {
 	loginState := c.Cookies("loginState1")
 
 	log.Println(loginState, "login state cookie")
+	log.Println(refreshTokenCookie, "login state cookie")
+	log.Println(accessTokenCookie, "login state cookie")
 
 	if accessTokenCookie == "" {
 		//
