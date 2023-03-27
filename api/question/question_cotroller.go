@@ -75,7 +75,10 @@ func TagsPageStats(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	return c.JSON(tagCount[0])
+	if len(tagCount) > 0 {
+		return c.JSON(tagCount[0])
+	}
+	return c.SendStatus(200)
 }
 
 func Explore(c *fiber.Ctx) error {
