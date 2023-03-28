@@ -204,6 +204,8 @@ func ChangeQuestionWithPagination(c *fiber.Ctx) error {
 
 	if c.Query("action") == "back" {
 
+		opts.SetSort(bson.D{{Key: "_id", Value: -1}})
+
 		query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "_id", Value: bson.D{{Key: "$lt", Value: id}}}}, bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}}}}
 		cursor, err := database.MG.Db.Collection("questions").Find(c.Context(), query, opts)
 		if err != nil {
