@@ -27,7 +27,7 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/feed", feed.MakeHomeFeed)
 	v1.Post("/completeProfile", user.CompleteProfile)
 	v1.Get("/userCheck/:email", user.UserCheck)
-	v1.Get("/gptAnswer", answer.GetGptAnswer)
+	v1.Get("/gptAnswer/:questionId", answer.GetGptAnswer)
 
 	//sse routes and login only
 	// /leaderboard all broadcast
@@ -73,7 +73,7 @@ func SetupApiRoutes(app *fiber.App) {
 
 	// adminRoute := v1.Group("/admin")
 
-	// adminRoute.Post("/gptAnswer", admin.PostGptAnswer)
+	// adminRoute.Post("/gptAnswer/:questionId", admin.PostGptAnswer)
 
 	// adminRoute.Get("/tags", admin.GetTags)
 	// adminRoute.Get("/questions/:tagName", admin.GetQuestionsOfTag)
