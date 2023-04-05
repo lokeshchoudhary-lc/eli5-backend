@@ -18,16 +18,7 @@ const collection string = "answers"
 func GetUserAnswer(c *fiber.Ctx) error {
 	var uniqueAlias string = c.Locals("uniqueAlias").(string)
 
-	type answer struct {
-		Id         string `json:"id" bson:"_id"`
-		QuestionId string `json:"questionId" bson:"questionId"`
-		Answer     string `json:"answer" bson:"answer"`
-		AnsweredBy string `json:"answeredBy" bson:"answeredBy"`
-		LikeNumber int64  `json:"likeNumber" bson:"likeNumber"`
-		CreatedAt  int64  `json:"createdAt" bson:"createdAt"`
-		Liked      bool   `json:"liked"`
-	}
-	var userAnswer answer
+	var userAnswer Answer
 
 	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "answeredBy", Value: uniqueAlias}}, bson.D{{Key: "questionId", Value: c.Params("questionId")}}}}}
 	err := database.MG.Db.Collection(collection).FindOne(c.Context(), query).Decode(&userAnswer)
@@ -37,6 +28,20 @@ func GetUserAnswer(c *fiber.Ctx) error {
 
 	}
 	return c.JSON(userAnswer)
+
+}
+
+func GetGptAnswer(c *fiber.Ctx) error {
+	var gptAnswer GptAnswer
+
+	query := bson.D{{Key: "questionId", Value: c.Params("questionId")}}
+	err := database.MG.Db.Collection("gptAnswers").FindOne(c.Context(), query).Decode(&gptAnswer)
+
+	if err == mongo.ErrNoDocuments {
+		return c.JSON(&fiber.Map{"message": "no_answer"})
+
+	}
+	return c.JSON(gptAnswer)
 
 }
 

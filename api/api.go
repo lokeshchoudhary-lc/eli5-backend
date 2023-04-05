@@ -6,7 +6,6 @@ import (
 	"eli5/api/question"
 	"eli5/api/user"
 	"eli5/middleware"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,6 +27,7 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/feed", feed.MakeHomeFeed)
 	v1.Post("/completeProfile", user.CompleteProfile)
 	v1.Get("/userCheck/:email", user.UserCheck)
+	v1.Get("/gptAnswer", answer.GetGptAnswer)
 
 	//sse routes and login only
 	// /leaderboard all broadcast
@@ -73,13 +73,12 @@ func SetupApiRoutes(app *fiber.App) {
 
 	// adminRoute := v1.Group("/admin")
 
+	// adminRoute.Post("/gptAnswer", admin.PostGptAnswer)
+
 	// adminRoute.Get("/tags", admin.GetTags)
 	// adminRoute.Get("/questions/:tagName", admin.GetQuestionsOfTag)
 	// adminRoute.Post("/choose/question/:questionId", admin.ChooseQuestion)
 	// adminRoute.Post("/choose/tag/:tagName", admin.ChooseTag)
 	// adminRoute.Post("/question", admin.PostQuestion)
 	// adminRoute.Post("/tag/:tagName", admin.PostTag)
-}
-func handler(f http.HandlerFunc) http.Handler {
-	return http.HandlerFunc(f)
 }
