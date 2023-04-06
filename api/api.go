@@ -1,6 +1,7 @@
 package api
 
 import (
+	"eli5/api/admin"
 	"eli5/api/answer"
 	"eli5/api/feed"
 	"eli5/api/question"
@@ -71,9 +72,9 @@ func SetupApiRoutes(app *fiber.App) {
 	// v1.Get("/auth/google/callback", user.GoogleAuthCallback)
 	// v1.Post("/signup")
 
-	// adminRoute := v1.Group("/admin")
+	adminRoute := v1.Group("/admin")
 
-	// adminRoute.Post("/gptAnswer/:questionId", admin.PostGptAnswer)
+	adminRoute.Post("/gptAnswer/:questionId", admin.PostGptAnswer)
 
 	// adminRoute.Get("/tags", admin.GetTags)
 	// adminRoute.Get("/questions/:tagName", admin.GetQuestionsOfTag)

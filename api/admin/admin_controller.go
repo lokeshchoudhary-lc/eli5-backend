@@ -1,8 +1,10 @@
 package admin
 
 import (
+	"eli5/api/answer"
 	"eli5/api/question"
 	"eli5/config/database"
+	"eli5/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -94,6 +96,37 @@ func PostTag(c *fiber.Ctx) error {
 	createdRecord.Decode(createdTag)
 
 	return c.Status(201).JSON(createdTag)
+}
+
+func PostGptAnswer(c *fiber.Ctx) error {
+
+	gptAnswer := new(answer.GptAnswer)
+
+	if err := c.BodyParser(gptAnswer); err != nil {
+		return c.Status(400).SendString(err.Error())
+	}
+
+	// force MongoDB to always set its own generated ObjectIDs
+	gptAnswer.Id = ""
+
+	//sanitize answer
+	html := utils.SanitizeHtml(gptAnswer.Answer)
+	gptAnswer.Answer = html
+
+	// insert the record
+	insertResult, err := database.MG.Db.Collection("gptAnswers").InsertOne(c.Context(), gptAnswer)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	createdGptAnswer := new(answer.GptAnswer)
+
+	// get the just inserted record in order to return it as response
+	query := bson.D{{Key: "_id", Value: insertResult.InsertedID}}
+	database.MG.Db.Collection("gptAnswers").FindOne(c.Context(), query).Decode(&createdGptAnswer)
+
+	return c.Status(201).JSON(&fiber.Map{"gptAnswer": createdGptAnswer})
+
 }
 
 // func UpdateQuestion(c *fiber.Ctx) error {
