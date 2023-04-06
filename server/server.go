@@ -22,8 +22,8 @@ func setupMiddlewares(app *fiber.App) {
 	app.Use(helmet.New())
 	app.Use(recover.New())
 	// app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "*"}))
-	// app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "http://localhost:3000,http://127.0.0.1:5173,http://localhost:5173,http://localhost,http://127.0.0.1"}))
-	app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "https://eli5.club,https://www.eli5.club,https://backend.eli5.club"}))
+	app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "http://localhost:3000,http://127.0.0.1:5173,http://localhost:5173,http://localhost,http://127.0.0.1"}))
+	// app.Use(cors.New(cors.Config{AllowCredentials: true, AllowOrigins: "https://eli5.club,https://www.eli5.club,https://backend.eli5.club"}))
 }
 
 func Create() *fiber.App {
