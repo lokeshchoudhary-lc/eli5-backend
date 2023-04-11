@@ -83,8 +83,10 @@ func TagsPageStats(c *fiber.Ctx) error {
 
 func Explore(c *fiber.Ctx) error {
 	//give list of all tags present
+	options := options.Find()
+	options.SetSort(bson.D{{Key: "_id", Value: -1}})
 	query := bson.D{{Key: "choosen", Value: true}}
-	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query)
+	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query, options)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
@@ -124,6 +126,7 @@ func GetQuestionsOfTag(c *fiber.Ctx) error {
 	tag := c.Params("tag")
 
 	opts := options.Find()
+	opts.SetSort(bson.D{{Key: "_id", Value: -1}})
 
 	var perPageItem int64 = 10
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -179,7 +182,7 @@ func ChangeQuestionWithPagination(c *fiber.Ctx) error {
 	if c.Query("action") == "next" {
 
 		query := bson.D{{Key: "$and", Value: bson.A{
-			bson.D{{Key: "_id", Value: bson.D{{Key: "$gt", Value: id}}}},
+			bson.D{{Key: "_id", Value: bson.D{{Key: "$lt", Value: id}}}},
 			bson.D{{Key: "$and", Value: bson.A{
 				bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}}}}
 
@@ -206,7 +209,7 @@ func ChangeQuestionWithPagination(c *fiber.Ctx) error {
 
 		opts.SetSort(bson.D{{Key: "_id", Value: -1}})
 
-		query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "_id", Value: bson.D{{Key: "$lt", Value: id}}}}, bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}}}}
+		query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "_id", Value: bson.D{{Key: "$gt", Value: id}}}}, bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}}}}
 		cursor, err := database.MG.Db.Collection("questions").Find(c.Context(), query, opts)
 		if err != nil {
 			return c.Status(500).SendString(err.Error())
