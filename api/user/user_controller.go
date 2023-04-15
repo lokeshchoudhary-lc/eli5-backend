@@ -70,6 +70,7 @@ func UserCheck(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userCheck.UniqueAlias,
+			Domain:   "eli5.club",
 			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
@@ -79,6 +80,7 @@ func UserCheck(c *fiber.Ctx) error {
 		loginState := fiber.Cookie{
 			Name:     "appState",
 			Value:    "true",
+			Domain:   "eli5.club",
 			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
@@ -159,6 +161,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	userState := fiber.Cookie{
 		Name:     "user",
 		Value:    uniqueAlias,
+		Domain:   "eli5.club",
 		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
@@ -168,6 +171,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	loginState := fiber.Cookie{
 		Name:     "appState",
 		Value:    "true",
+		Domain:   "eli5.club",
 		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
@@ -215,6 +219,7 @@ func UpdateUserProfile(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userData.UniqueAlias,
+			Domain:   "eli5.club",
 			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
