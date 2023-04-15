@@ -2,9 +2,7 @@ package feed
 
 import (
 	"eli5/api/question"
-	"eli5/api/user"
 	"eli5/config/database"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,6 +17,7 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 		Id                 string `json:"id" bson:"_id"`
 		QuestionId         string `json:"questionId" bson:"questionId"`
 		Answer             string `json:"answer" bson:"answer"`
+		AnsweredByName     string `json:"answeredByName" bson:"answeredByName"`
 		AnsweredBy         string `json:"answeredBy" bson:"answeredBy"`
 		LikeNumber         int64  `json:"likeNumber" bson:"likeNumber"`
 		CreatedAt          int64  `json:"createdAt" bson:"createdAt"`
@@ -91,13 +90,15 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 	bestAnswerSingle := bestAnswer[0]
 
 	//find profile picture code of the user for the answer
-	type ppc struct {
+	type user struct {
 		ProfilePictureCode string `json:"profilePictureCode" bson:"profilePictureCode"`
+		UniqueAlias        string `json:"uniqueAlias" bson:"uniqueAlias"`
 	}
-	var pp ppc
-	opt := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}})
-	query = bson.D{{Key: "uniqueAlias", Value: bestAnswerSingle.AnsweredBy}}
-	err = database.MG.Db.Collection("users").FindOne(c.Context(), query, opt).Decode(&pp)
+	var u user
+	id, _ := primitive.ObjectIDFromHex(bestAnswerSingle.AnsweredBy)
+	opt := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}, {Key: "uniqueAlias", Value: 1}})
+	query = bson.D{{Key: "_id", Value: id}}
+	err = database.MG.Db.Collection("users").FindOne(c.Context(), query, opt).Decode(&u)
 	if err != nil {
 
 		if err == mongo.ErrNoDocuments {
@@ -106,11 +107,12 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 		}
 		return c.Status(500).SendString(err.Error())
 	}
-	bestAnswerSingle.ProfilePictureCode = pp.ProfilePictureCode
+	bestAnswerSingle.ProfilePictureCode = u.ProfilePictureCode
+	bestAnswerSingle.AnsweredByName = u.UniqueAlias
 
 	//find the question of the answer
 	var question question.Question
-	id, _ := primitive.ObjectIDFromHex(bestAnswerSingle.QuestionId)
+	id, _ = primitive.ObjectIDFromHex(bestAnswerSingle.QuestionId)
 	query = bson.D{{Key: "_id", Value: id}}
 	err = database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
 	if err != nil {
@@ -138,45 +140,5 @@ func MakeHomeFeed(c *fiber.Ctx) error {
 		"topQuestions": topQuestions,
 		"topTags":      topTags,
 		"bestAnswer":   bestAnswerSingle,
-	})
-}
-
-func GetUserDetails(c *fiber.Ctx) error {
-	var userId string = c.Locals("userId").(string)
-	var user user.User
-
-	id, _ := primitive.ObjectIDFromHex(userId)
-	query := bson.D{{Key: "_id", Value: id}}
-	err := database.MG.Db.Collection("users").FindOne(c.Context(), query).Decode(&user)
-
-	if err != nil {
-
-		return c.Status(500).SendString(err.Error())
-	}
-
-	currStreakTime := time.Now().Unix()
-
-	var limit48 int64 = 172800
-
-	if user.PrevStreakTime != 0 {
-
-		if (currStreakTime - user.PrevStreakTime) > limit48 {
-			user.Streak = 0
-			//update new value of streak  into user with userId
-			query := bson.D{{Key: "_id", Value: id}}
-			updateQuery := bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: user.Streak}}}}
-			_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
-			if err != nil {
-				return c.Status(500).SendString(err.Error())
-			}
-		}
-	}
-
-	return c.JSON(&fiber.Map{
-		"firstName":          user.FirstName,
-		"profilePictureCode": user.ProfilePictureCode,
-		"streak":             user.Streak,
-		"totalLikes":         user.TotalLikes,
-		"totalAnswers":       user.TotalAnswers,
 	})
 }

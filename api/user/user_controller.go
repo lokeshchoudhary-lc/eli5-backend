@@ -40,38 +40,56 @@ func UserCheck(c *fiber.Ctx) error {
 
 	if err != mongo.ErrNoDocuments {
 
-		accessToken, err := auth.CreateAccessToken(userCheck.Id, userCheck.UniqueAlias)
+		accessToken, err := auth.CreateAccessToken(userCheck.Id)
 		if err != nil {
 			return c.Status(500).SendString(err.Error())
 		}
 		accessTokenCookie := fiber.Cookie{
 			Name:     "accessToken",
 			Value:    accessToken,
-			Expires:  time.Now().Add(time.Minute * 15),
+			SameSite: "Strict",
+			Secure:   true,
+			// Expires:  time.Now().Add(time.Minute * 15),
+			MaxAge:   60 * 15,
 			HTTPOnly: true,
 		}
 
-		refreshToken, err := auth.CreateRefreshToken(userCheck.Id, userCheck.UniqueAlias)
+		refreshToken, err := auth.CreateRefreshToken(userCheck.Id)
 		if err != nil {
-			fmt.Println("2")
-
 			return c.Status(500).SendString(err.Error())
 		}
 		refreshTokenCookie := fiber.Cookie{
 			Name:     "refreshToken",
 			Value:    refreshToken,
-			Expires:  time.Now().Add(time.Hour * 168),
+			SameSite: "Strict",
+			Secure:   true,
+			// Expires:  time.Now().Add(time.Hour * 168),
+			MaxAge:   60 * 60 * 24 * 7,
+			HTTPOnly: true,
+		}
+		userState := fiber.Cookie{
+			Name:     "user",
+			Value:    userCheck.UniqueAlias,
+			SameSite: "Strict",
+			Secure:   true,
+			// Expires:  time.Now().Add(time.Hour * 168),
+			MaxAge:   60 * 60 * 24 * 7,
 			HTTPOnly: true,
 		}
 		loginState := fiber.Cookie{
-			Name:     "loginState",
+			Name:     "appState",
 			Value:    "true",
-			Expires:  time.Now().Add(time.Hour * 168),
-			HTTPOnly: false,
+			SameSite: "Strict",
+			Secure:   true,
+			// Expires:  time.Now().Add(time.Hour * 168),
+			MaxAge:   60 * 60 * 24 * 7,
+			HTTPOnly: true,
 		}
+		c.Cookie(&loginState)
+		c.Cookie(&userState)
 		c.Cookie(&accessTokenCookie)
 		c.Cookie(&refreshTokenCookie)
-		c.Cookie(&loginState)
+		// c.Cookie(&loginState)
 
 		return c.Status(200).SendString("go_to_feed")
 	}
@@ -94,7 +112,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 
 	user.CreatedAt = time.Now().Unix()
 	user.Id = ""
-	user.Rank = 0
+	// user.Score = 0
 	user.Streak = 0
 	user.TotalAnswers = 0
 	user.TotalLikes = 0
@@ -107,7 +125,9 @@ func CompleteProfile(c *fiber.Ctx) error {
 	userId := insertedResult.InsertedID.(primitive.ObjectID).Hex()
 	uniqueAlias := user.UniqueAlias
 
-	accessToken, err := auth.CreateAccessToken(userId, uniqueAlias)
+	// database.Redis.Client.ZAdd(c.Context(), "leaderboard", redis.Z{Score: float64(user.Score), Member: userId})
+
+	accessToken, err := auth.CreateAccessToken(userId)
 	if err != nil {
 
 		fmt.Println(err)
@@ -116,27 +136,46 @@ func CompleteProfile(c *fiber.Ctx) error {
 	accessTokenCookie := fiber.Cookie{
 		Name:     "accessToken",
 		Value:    accessToken,
-		Expires:  time.Now().Add(time.Minute * 15),
+		SameSite: "Strict",
+		Secure:   true,
+		// Expires:  time.Now().Add(time.Minute * 15),
+		MaxAge:   60 * 15,
 		HTTPOnly: true,
 	}
 
-	refreshToken, err := auth.CreateRefreshToken(userId, uniqueAlias)
+	refreshToken, err := auth.CreateRefreshToken(userId)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
 	refreshTokenCookie := fiber.Cookie{
 		Name:     "refreshToken",
 		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Hour * 168),
+		SameSite: "Strict",
+		Secure:   true,
+		// Expires:  time.Now().Add(time.Hour * 168),
+		MaxAge:   60 * 60 * 24 * 7,
+		HTTPOnly: true,
+	}
+	userState := fiber.Cookie{
+		Name:     "user",
+		Value:    uniqueAlias,
+		SameSite: "Strict",
+		Secure:   true,
+		// Expires:  time.Now().Add(time.Hour * 168),
+		MaxAge:   60 * 60 * 24 * 7,
 		HTTPOnly: true,
 	}
 	loginState := fiber.Cookie{
-		Name:     "loginState",
+		Name:     "appState",
 		Value:    "true",
-		Expires:  time.Now().Add(time.Hour * 168),
-		HTTPOnly: false,
+		SameSite: "Strict",
+		Secure:   true,
+		// Expires:  time.Now().Add(time.Hour * 168),
+		MaxAge:   60 * 60 * 24 * 7,
+		HTTPOnly: true,
 	}
 	c.Cookie(&loginState)
+	c.Cookie(&userState)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
 
@@ -144,7 +183,112 @@ func CompleteProfile(c *fiber.Ctx) error {
 
 }
 
+func UpdateUserProfile(c *fiber.Ctx) error {
+
+	var userId string = c.Locals("userId").(string)
+	id, _ := primitive.ObjectIDFromHex(userId)
+
+	type user struct {
+		UniqueAlias  string `json:"uniqueAlias,omitempty" bson:"uniqueAlias,omitempty"`
+		Bio          string `json:"bio,omitempty" bson:"bio,omitempty"`
+		TwitterUrl   string `json:"twitterUrl,omitempty" bson:"twitterUrl,omitempty"`
+		LinkedinUrl  string `json:"linkedinUrl,omitempty" bson:"linkedinUrl,omitempty"`
+		InstagramUrl string `json:"instagramUrl,omitempty" bson:"instagramUrl,omitempty"`
+	}
+
+	userData := new(user)
+
+	if err := c.BodyParser(userData); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	fmt.Println(userData)
+
+	//check if new uniqueAlias/username already exists
+	if userData.UniqueAlias != "" {
+		query := bson.D{{Key: "uniqueAlias", Value: userData.UniqueAlias}}
+		res := database.MG.Db.Collection("users").FindOne(c.Context(), query)
+		if res.Err() != mongo.ErrNoDocuments {
+			// uniqueAlias exists already
+			return c.Status(400).SendString("exist")
+		}
+		userState := fiber.Cookie{
+			Name:     "user",
+			Value:    userData.UniqueAlias,
+			SameSite: "Strict",
+			Secure:   true,
+			// Expires:  time.Now().Add(time.Hour * 168),
+			MaxAge:   60 * 60 * 24 * 7,
+			HTTPOnly: true,
+		}
+		c.Cookie(&userState)
+	}
+
+	query := bson.D{{Key: "_id", Value: id}}
+	updateQuery := bson.D{{Key: "$set", Value: userData}}
+	_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	return c.SendStatus(200)
+}
+
+func GetUserDetails(c *fiber.Ctx) error {
+	var username = c.Params("username")
+
+	var user User
+
+	query := bson.D{{Key: "uniqueAlias", Value: username}}
+	err := database.MG.Db.Collection("users").FindOne(c.Context(), query).Decode(&user)
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	currStreakTime := time.Now().Unix()
+
+	var limit48 int64 = 172800
+
+	if user.PrevStreakTime != 0 {
+
+		if (currStreakTime - user.PrevStreakTime) > limit48 {
+			user.Streak = 0
+			//update new value of streak  into user with uniqueAlias
+			query := bson.D{{Key: "uniqueAlias", Value: username}}
+			updateQuery := bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: user.Streak}}}}
+			_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
+			if err != nil {
+				return c.Status(500).SendString(err.Error())
+			}
+		}
+	}
+
+	// userRank, err := database.Redis.Client.ZRevRank(c.Context(), "leaderboard", userId).Result()
+	// if err == redis.Nil {
+	// 	// this means we didn't got an data from redis and send user -1 to signal no data
+	// 	userRank = -1
+	// }
+	return c.JSON(&fiber.Map{
+		"userId":             user.Id,
+		"firstName":          user.FirstName,
+		"bio":                user.Bio,
+		"uniqueAlias":        user.UniqueAlias,
+		"profilePictureCode": user.ProfilePictureCode,
+		"streak":             user.Streak,
+		"totalLikes":         user.TotalLikes,
+		"totalAnswers":       user.TotalAnswers,
+		"createdAt":          user.CreatedAt,
+		"twitterUrl":         user.TwitterUrl,
+		"instagramUrl":       user.InstagramUrl,
+		"linkedinUrl":        user.LinkedinUrl,
+
+		// "rank":               userRank,
+	})
+}
+
 func Logout(c *fiber.Ctx) error {
+
 	accessTokenCookie := fiber.Cookie{
 		Name:     "accessToken",
 		Value:    "",
@@ -157,87 +301,28 @@ func Logout(c *fiber.Ctx) error {
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
 	}
-	loginState := fiber.Cookie{
-		Name:     "loginState",
-		Value:    "true",
+	appStateCookie := fiber.Cookie{
+		Name:     "appState",
+		Value:    "",
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-		HTTPOnly: false,
+		HTTPOnly: true,
 	}
-	c.Cookie(&loginState)
+	userCookie := fiber.Cookie{
+		Name:     "user",
+		Value:    "",
+		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+		HTTPOnly: true,
+	}
+	// loginState := fiber.Cookie{
+	// 	Name:     "loginState",
+	// 	Value:    "true",
+	// 	Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+	// 	HTTPOnly: false,
+	// }
+	// c.Cookie(&loginState)
+	c.Cookie(&userCookie)
+	c.Cookie(&appStateCookie)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
 	return c.SendStatus(200)
 }
-
-// func GoogleAuth(c *fiber.Ctx) error {
-// 	path := auth.ConfigGoogle()
-// 	url := path.AuthCodeURL("state")
-// 	return c.Redirect(url)
-
-// }
-
-// func GoogleAuthCallback(c *fiber.Ctx) error {
-// 	token, error := auth.ConfigGoogle().Exchange(c.Context(), c.FormValue("code"))
-// 	if error != nil {
-// 		return c.Status(500).SendString(error.Error())
-// 	}
-
-// 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
-// 	if err != nil {
-// 		return c.Status(500).SendString(error.Error())
-// 	}
-
-// 	defer response.Body.Close()
-// 	contents, err := io.ReadAll(response.Body)
-// 	if err != nil {
-// 		return c.Status(500).SendString(err.Error())
-// 	}
-// 	type GoogleResponse struct {
-// 		Email string `json:"email" `
-// 		Name  string `json:"name" `
-// 	}
-
-// 	var data GoogleResponse
-// 	errorz := json.Unmarshal(contents, &data)
-// 	if errorz != nil {
-// 		return c.Status(500).SendString(errorz.Error())
-// 	}
-
-// 	words := strings.Fields(data.Name)
-// 	data.Name = words[0]
-
-// 	userCheck := new(User)
-// 	query := bson.D{{Key: "email", Value: data.Email}}
-// 	err = database.MG.Db.Collection("users").FindOne(c.Context(), query).Decode(&userCheck)
-
-// 	if err != nil {
-
-// 		accessToken, err := auth.CreateAccessToken(userCheck.Id, userCheck.UniqueAlias)
-// 		if err != nil {
-// 			return c.Status(500).SendString(err.Error())
-// 		}
-// 		accessTokenCookie := fiber.Cookie{
-// 			Name:     "accessToken",
-// 			Value:    accessToken,
-// 			Expires:  time.Now().Add(time.Minute * 15),
-// 			HTTPOnly: true,
-// 		}
-
-// 		refreshToken, err := auth.CreateRefreshToken(userCheck.Id, userCheck.UniqueAlias)
-// 		if err != nil {
-// 			return c.Status(500).SendString(err.Error())
-// 		}
-// 		refreshTokenCookie := fiber.Cookie{
-// 			Name:     "refreshToken",
-// 			Value:    refreshToken,
-// 			Expires:  time.Now().Add(time.Hour * 168),
-// 			HTTPOnly: true,
-// 		}
-// 		c.Cookie(&accessTokenCookie)
-// 		c.Cookie(&refreshTokenCookie)
-
-// 		return c.Status(200).SendString("go_to_feed")
-// 	}
-
-// 	return c.Status(200).JSON(data)
-// }

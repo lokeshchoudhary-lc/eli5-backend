@@ -7,17 +7,31 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetQuestion(c *fiber.Ctx) error {
+	questionId := c.Params("questionId")
+
+	id, _ := primitive.ObjectIDFromHex(questionId)
+
+	var question Question
+	query := bson.D{{Key: "_id", Value: id}}
+	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	return c.JSON(question)
+}
+
 func AskQuestion(c *fiber.Ctx) error {
-	uniqueAlias := c.Locals("uniqueAlias").(string)
 	askedQuestion := new(AskedQuestion)
 
 	if err := c.BodyParser(askedQuestion); err != nil {
 		return c.Status(400).SendString(err.Error())
 	}
-	askedQuestion.AskedBy = uniqueAlias
 
 	_, err := database.MG.Db.Collection("askedQuestions").InsertOne(c.Context(), askedQuestion)
 
@@ -28,10 +42,49 @@ func AskQuestion(c *fiber.Ctx) error {
 	return c.SendStatus(200)
 }
 
+func TagsPageStats(c *fiber.Ctx) error {
+	tag := c.Params("tag")
+
+	type count struct {
+		LikeCount   int `json:"likeCount" bson:"likeCount"`
+		AnswerCount int `json:"answerCount" bson:"answerCount"`
+	}
+
+	var tagCount []count
+
+	matchStage := bson.D{
+		{Key: "$match", Value: bson.D{
+			{Key: "tag", Value: tag},
+		}}}
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: "$tag"},
+			{Key: "likeCount", Value: bson.D{{Key: "$sum", Value: "$likeNumber"}}},
+			{Key: "answerCount", Value: bson.D{{Key: "$count", Value: bson.D{}}}},
+		}}}
+
+	cursor, err := database.MG.Db.Collection("answers").Aggregate(c.Context(), mongo.Pipeline{matchStage, groupStage})
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	if err := cursor.All(c.Context(), &tagCount); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	if len(tagCount) > 0 {
+		return c.JSON(tagCount[0])
+	}
+	return c.SendStatus(200)
+}
+
 func Explore(c *fiber.Ctx) error {
 	//give list of all tags present
+	options := options.Find()
+	options.SetSort(bson.D{{Key: "_id", Value: -1}})
 	query := bson.D{{Key: "choosen", Value: true}}
-	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query)
+	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query, options)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
@@ -95,22 +148,22 @@ func GetQuestionsOfTag(c *fiber.Ctx) error {
 	return c.JSON(questions)
 }
 
-func GetQuestionOfTag(c *fiber.Ctx) error {
-	tag := c.Params("tag")
+// func GetQuestionOfTag(c *fiber.Ctx) error {
+// 	tag := c.Params("tag")
 
-	var question Question
-	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}
-	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
+// 	var question Question
+// 	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}
+// 	err := database.MG.Db.Collection("questions").FindOne(c.Context(), query).Decode(&question)
 
-	if err != nil {
+// 	if err != nil {
 
-		return c.Status(500).SendString(err.Error())
-	}
-	return c.JSON(question)
+// 		return c.Status(500).SendString(err.Error())
+// 	}
+// 	return c.JSON(question)
 
-}
+// }
 
-func GetQuestionWithPagination(c *fiber.Ctx) error {
+func ChangeQuestionWithPagination(c *fiber.Ctx) error {
 	questionId := c.Params("questionId")
 	tag := c.Query("tag")
 
@@ -150,6 +203,8 @@ func GetQuestionWithPagination(c *fiber.Ctx) error {
 	}
 
 	if c.Query("action") == "back" {
+
+		opts.SetSort(bson.D{{Key: "_id", Value: -1}})
 
 		query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "_id", Value: bson.D{{Key: "$lt", Value: id}}}}, bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}}}}
 		cursor, err := database.MG.Db.Collection("questions").Find(c.Context(), query, opts)
