@@ -80,7 +80,7 @@ func UserCheck(c *fiber.Ctx) error {
 			HTTPOnly: true,
 		}
 		loginState := fiber.Cookie{
-			Name:     "appState",
+			Name:     "appState1",
 			Value:    "true",
 			Domain:   "eli5.club",
 			SameSite: "none",
@@ -173,7 +173,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	}
 	loginState := fiber.Cookie{
-		Name:     "appState",
+		Name:     "appState1",
 		Value:    "true",
 		Domain:   "eli5.club",
 		SameSite: "none",
@@ -311,7 +311,7 @@ func Logout(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	}
 	appStateCookie := fiber.Cookie{
-		Name:     "appState",
+		Name:     "appState1",
 		Value:    "",
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
