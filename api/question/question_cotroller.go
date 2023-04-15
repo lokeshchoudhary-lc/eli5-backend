@@ -81,8 +81,10 @@ func TagsPageStats(c *fiber.Ctx) error {
 
 func Explore(c *fiber.Ctx) error {
 	//give list of all tags present
+	options := options.Find()
+	options.SetSort(bson.D{{Key: "_id", Value: -1}})
 	query := bson.D{{Key: "choosen", Value: true}}
-	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query)
+	cursor, err := database.MG.Db.Collection("tags").Find(c.Context(), query, options)
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
