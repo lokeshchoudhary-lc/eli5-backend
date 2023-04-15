@@ -27,13 +27,11 @@ func GetQuestion(c *fiber.Ctx) error {
 }
 
 func AskQuestion(c *fiber.Ctx) error {
-	uniqueAlias := c.Locals("uniqueAlias").(string)
 	askedQuestion := new(AskedQuestion)
 
 	if err := c.BodyParser(askedQuestion); err != nil {
 		return c.Status(400).SendString(err.Error())
 	}
-	askedQuestion.AskedBy = uniqueAlias
 
 	_, err := database.MG.Db.Collection("askedQuestions").InsertOne(c.Context(), askedQuestion)
 

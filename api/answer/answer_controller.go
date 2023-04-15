@@ -16,11 +16,11 @@ import (
 const collection string = "answers"
 
 func GetUserAnswer(c *fiber.Ctx) error {
-	var uniqueAlias string = c.Locals("uniqueAlias").(string)
+	userId := c.Locals("userId").(string)
 
 	var userAnswer Answer
 
-	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "answeredBy", Value: uniqueAlias}}, bson.D{{Key: "questionId", Value: c.Params("questionId")}}}}}
+	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "answeredBy", Value: userId}}, bson.D{{Key: "questionId", Value: c.Params("questionId")}}}}}
 	err := database.MG.Db.Collection(collection).FindOne(c.Context(), query).Decode(&userAnswer)
 
 	if err == mongo.ErrNoDocuments {
@@ -76,6 +76,7 @@ func GetGuestAnswers(c *fiber.Ctx) error {
 		Id                 string `json:"id" bson:"_id"`
 		QuestionId         string `json:"questionId" bson:"questionId"`
 		Answer             string `json:"answer" bson:"answer"`
+		AnsweredByName     string `json:"answeredByName" bson:"answeredByName"`
 		AnsweredBy         string `json:"answeredBy" bson:"answeredBy"`
 		LikeNumber         int64  `json:"likeNumber" bson:"likeNumber"`
 		CreatedAt          int64  `json:"createdAt" bson:"createdAt"`
@@ -98,17 +99,20 @@ func GetGuestAnswers(c *fiber.Ctx) error {
 		//give every answer liked as false for guest render of answers
 		answers[i].Liked = false
 
-		type ppc struct {
+		type user struct {
 			ProfilePictureCode string `json:"profilePictureCode" bson:"profilePictureCode"`
+			UniqueAlias        string `json:"uniqueAlias" bson:"uniqueAlias"`
 		}
-		var pp ppc
-		opts := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}})
-		query = bson.D{{Key: "uniqueAlias", Value: answer.AnsweredBy}}
-		err := database.MG.Db.Collection("users").FindOne(c.Context(), query, opts).Decode(&pp)
+		var u user
+		id, _ := primitive.ObjectIDFromHex(answer.AnsweredBy)
+		opts := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}, {Key: "uniqueAlias", Value: 1}})
+		query = bson.D{{Key: "_id", Value: id}}
+		err := database.MG.Db.Collection("users").FindOne(c.Context(), query, opts).Decode(&u)
 		if err != nil {
 			return c.Status(500).SendString(err.Error())
 		}
-		answers[i].ProfilePictureCode = pp.ProfilePictureCode
+		answers[i].ProfilePictureCode = u.ProfilePictureCode
+		answers[i].AnsweredByName = u.UniqueAlias
 	}
 	return c.JSON(answers)
 
@@ -145,6 +149,7 @@ func GetAnswers(c *fiber.Ctx) error {
 		Id                 string `json:"id" bson:"_id"`
 		QuestionId         string `json:"questionId" bson:"questionId"`
 		Answer             string `json:"answer" bson:"answer"`
+		AnsweredByName     string `json:"answeredByName" bson:"answeredByName"`
 		AnsweredBy         string `json:"answeredBy" bson:"answeredBy"`
 		LikeNumber         int64  `json:"likeNumber" bson:"likeNumber"`
 		CreatedAt          int64  `json:"createdAt" bson:"createdAt"`
@@ -174,17 +179,20 @@ func GetAnswers(c *fiber.Ctx) error {
 			answers[i].Liked = false
 		}
 
-		type ppc struct {
+		type user struct {
 			ProfilePictureCode string `json:"profilePictureCode" bson:"profilePictureCode"`
+			UniqueAlias        string `json:"uniqueAlias" bson:"uniqueAlias"`
 		}
-		var pp ppc
-		opts := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}})
-		query = bson.D{{Key: "uniqueAlias", Value: answer.AnsweredBy}}
-		err := database.MG.Db.Collection("users").FindOne(c.Context(), query, opts).Decode(&pp)
+		var u user
+		id, _ := primitive.ObjectIDFromHex(answer.AnsweredBy)
+		opts := options.FindOne().SetProjection(bson.D{{Key: "profilePictureCode", Value: 1}, {Key: "uniqueAlias", Value: 1}})
+		query = bson.D{{Key: "_id", Value: id}}
+		err := database.MG.Db.Collection("users").FindOne(c.Context(), query, opts).Decode(&u)
 		if err != nil {
 			return c.Status(500).SendString(err.Error())
 		}
-		answers[i].ProfilePictureCode = pp.ProfilePictureCode
+		answers[i].ProfilePictureCode = u.ProfilePictureCode
+		answers[i].AnsweredByName = u.UniqueAlias
 	}
 	return c.JSON(answers)
 
@@ -194,11 +202,10 @@ func PostAnswer(c *fiber.Ctx) error {
 
 	//userId and uniqueAlias from token
 	var userId string = c.Locals("userId").(string)
-	var uniqueAlias string = c.Locals("uniqueAlias").(string)
 
 	//check if already answered by the user uniqueAlias
 
-	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "answeredBy", Value: uniqueAlias}}, bson.D{{Key: "questionId", Value: c.Params("questionId")}}}}}
+	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "answeredBy", Value: userId}}, bson.D{{Key: "questionId", Value: c.Params("questionId")}}}}}
 
 	res := database.MG.Db.Collection("answers").FindOne(c.Context(), query)
 
@@ -213,7 +220,7 @@ func PostAnswer(c *fiber.Ctx) error {
 		return c.Status(400).SendString(err.Error())
 	}
 	answer.CreatedAt = time.Now().Unix()
-	answer.AnsweredBy = uniqueAlias
+	answer.AnsweredBy = userId
 	answer.LikeNumber = 0
 	// force MongoDB to always set its own generated ObjectIDs
 	answer.Id = ""
@@ -298,11 +305,7 @@ func LikeAnwer(c *fiber.Ctx) error {
 	answerId := c.Params("answerId")
 	// user := c.Query("user")
 	answeredBy := c.Query("answeredBy")
-	numberId := c.Query("number")
 
-	answeredBy = answeredBy + "#" + numberId
-
-	//userId will taken from body
 	userId := c.Locals("userId").(string)
 	//put answerId into db with userId
 	var like Like
@@ -322,7 +325,8 @@ func LikeAnwer(c *fiber.Ctx) error {
 	//cal score
 	//update db
 	//increase totalLikes with answeredBy in user model
-	query = bson.D{{Key: "uniqueAlias", Value: answeredBy}}
+	id, _ := primitive.ObjectIDFromHex(answeredBy)
+	query = bson.D{{Key: "_id", Value: id}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: 1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
 
@@ -343,9 +347,7 @@ func CancelLike(c *fiber.Ctx) error {
 
 	answerId := c.Params("answerId")
 	answeredBy := c.Query("answeredBy")
-	numberId := c.Query("number")
 
-	answeredBy = answeredBy + "#" + numberId
 	//userId will taken from body
 	userId := c.Locals("userId").(string)
 	//delete answerId from db with userId
@@ -365,7 +367,8 @@ func CancelLike(c *fiber.Ctx) error {
 	}
 
 	//decrease totalLikes with answeredBy in user model
-	query = bson.D{{Key: "uniqueAlias", Value: answeredBy}}
+	id, _ := primitive.ObjectIDFromHex(answeredBy)
+	query = bson.D{{Key: "_id", Value: id}}
 	updateQuery = bson.D{{Key: "$inc", Value: bson.D{{Key: "totalLikes", Value: -1}}}}
 	database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
 
