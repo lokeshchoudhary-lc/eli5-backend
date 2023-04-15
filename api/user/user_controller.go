@@ -70,7 +70,7 @@ func UserCheck(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userCheck.UniqueAlias,
-			SameSite: "Strict",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -79,7 +79,7 @@ func UserCheck(c *fiber.Ctx) error {
 		loginState := fiber.Cookie{
 			Name:     "appState",
 			Value:    "true",
-			SameSite: "Strict",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -159,7 +159,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	userState := fiber.Cookie{
 		Name:     "user",
 		Value:    uniqueAlias,
-		SameSite: "Strict",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
@@ -168,7 +168,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	loginState := fiber.Cookie{
 		Name:     "appState",
 		Value:    "true",
-		SameSite: "Strict",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
@@ -215,7 +215,7 @@ func UpdateUserProfile(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userData.UniqueAlias,
-			SameSite: "Strict",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
