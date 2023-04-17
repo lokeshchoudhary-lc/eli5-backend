@@ -47,7 +47,8 @@ func UserCheck(c *fiber.Ctx) error {
 		accessTokenCookie := fiber.Cookie{
 			Name:     "accessToken",
 			Value:    accessToken,
-			SameSite: "Strict",
+			Domain:   "eli5.club",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Minute * 15),
 			MaxAge:   60 * 15,
@@ -61,7 +62,8 @@ func UserCheck(c *fiber.Ctx) error {
 		refreshTokenCookie := fiber.Cookie{
 			Name:     "refreshToken",
 			Value:    refreshToken,
-			SameSite: "Strict",
+			Domain:   "eli5.club",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -70,16 +72,18 @@ func UserCheck(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userCheck.UniqueAlias,
-			SameSite: "Strict",
+			Domain:   "eli5.club",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
 			HTTPOnly: true,
 		}
 		loginState := fiber.Cookie{
-			Name:     "appState",
+			Name:     "appState1",
 			Value:    "true",
-			SameSite: "Strict",
+			Domain:   "eli5.club",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -136,7 +140,8 @@ func CompleteProfile(c *fiber.Ctx) error {
 	accessTokenCookie := fiber.Cookie{
 		Name:     "accessToken",
 		Value:    accessToken,
-		SameSite: "Strict",
+		Domain:   "eli5.club",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Minute * 15),
 		MaxAge:   60 * 15,
@@ -150,7 +155,8 @@ func CompleteProfile(c *fiber.Ctx) error {
 	refreshTokenCookie := fiber.Cookie{
 		Name:     "refreshToken",
 		Value:    refreshToken,
-		SameSite: "Strict",
+		Domain:   "eli5.club",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
@@ -159,16 +165,18 @@ func CompleteProfile(c *fiber.Ctx) error {
 	userState := fiber.Cookie{
 		Name:     "user",
 		Value:    uniqueAlias,
-		SameSite: "Strict",
+		Domain:   "eli5.club",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
 		HTTPOnly: true,
 	}
 	loginState := fiber.Cookie{
-		Name:     "appState",
+		Name:     "appState1",
 		Value:    "true",
-		SameSite: "Strict",
+		Domain:   "eli5.club",
+		SameSite: "none",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
@@ -215,7 +223,8 @@ func UpdateUserProfile(c *fiber.Ctx) error {
 		userState := fiber.Cookie{
 			Name:     "user",
 			Value:    userData.UniqueAlias,
-			SameSite: "Strict",
+			Domain:   "eli5.club",
+			SameSite: "none",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -302,7 +311,7 @@ func Logout(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	}
 	appStateCookie := fiber.Cookie{
-		Name:     "appState",
+		Name:     "appState1",
 		Value:    "",
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
