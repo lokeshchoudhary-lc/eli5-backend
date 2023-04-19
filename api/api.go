@@ -28,7 +28,8 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Post("/completeProfile", user.CompleteProfile)
 	v1.Get("/userCheck/:email", user.UserCheck)
 	v1.Get("/gptAnswer/:questionId", answer.GetGptAnswer)
-	v1.Get("/userDetails/:username", user.GetUserDetails)
+	// v1.Get("/userDetails/:username", user.GetProfileDetails)
+	v1.Get("/profileDetails/:username", user.GetProfileDetails)
 	v1.Post("/question/ask", question.AskQuestion)
 
 	//sse routes and login only
@@ -38,6 +39,7 @@ func SetupApiRoutes(app *fiber.App) {
 	//action routes
 	v1.Get("/answers/:questionId", middleware.AuthVerify, answer.GetAnswers)
 	v1.Post("/answer/:questionId", middleware.AuthVerify, answer.PostAnswer)
+	v1.Get("/userDetails", middleware.AuthVerify, user.GetUserDetails)
 	v1.Put("/userDetails", middleware.AuthVerify, user.UpdateUserProfile)
 	v1.Put("/like/:answerId", middleware.AuthVerify, answer.LikeAnwer)
 	v1.Put("/cancelLike/:answerId", middleware.AuthVerify, answer.CancelLike)

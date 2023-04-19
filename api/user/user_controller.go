@@ -47,8 +47,7 @@ func UserCheck(c *fiber.Ctx) error {
 		accessTokenCookie := fiber.Cookie{
 			Name:     "accessToken",
 			Value:    accessToken,
-			Domain:   "eli5.club",
-			SameSite: "none",
+			SameSite: "Strict",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Minute * 15),
 			MaxAge:   60 * 15,
@@ -62,35 +61,22 @@ func UserCheck(c *fiber.Ctx) error {
 		refreshTokenCookie := fiber.Cookie{
 			Name:     "refreshToken",
 			Value:    refreshToken,
-			Domain:   "eli5.club",
-			SameSite: "none",
+			SameSite: "Strict",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
 			HTTPOnly: true,
 		}
-		userState := fiber.Cookie{
-			Name:     "user",
-			Value:    userCheck.UniqueAlias,
-			Domain:   "eli5.club",
-			SameSite: "none",
-			Secure:   true,
-			// Expires:  time.Now().Add(time.Hour * 168),
-			MaxAge:   60 * 60 * 24 * 7,
-			HTTPOnly: true,
-		}
-		loginState := fiber.Cookie{
-			Name:     "appState1",
+		appState := fiber.Cookie{
+			Name:     "appState",
 			Value:    "true",
-			Domain:   "eli5.club",
-			SameSite: "none",
+			SameSite: "Strict",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
 			HTTPOnly: true,
 		}
-		c.Cookie(&loginState)
-		c.Cookie(&userState)
+		c.Cookie(&appState)
 		c.Cookie(&accessTokenCookie)
 		c.Cookie(&refreshTokenCookie)
 		// c.Cookie(&loginState)
@@ -127,7 +113,6 @@ func CompleteProfile(c *fiber.Ctx) error {
 	}
 
 	userId := insertedResult.InsertedID.(primitive.ObjectID).Hex()
-	uniqueAlias := user.UniqueAlias
 
 	// database.Redis.Client.ZAdd(c.Context(), "leaderboard", redis.Z{Score: float64(user.Score), Member: userId})
 
@@ -140,8 +125,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	accessTokenCookie := fiber.Cookie{
 		Name:     "accessToken",
 		Value:    accessToken,
-		Domain:   "eli5.club",
-		SameSite: "none",
+		SameSite: "Strict",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Minute * 15),
 		MaxAge:   60 * 15,
@@ -155,35 +139,22 @@ func CompleteProfile(c *fiber.Ctx) error {
 	refreshTokenCookie := fiber.Cookie{
 		Name:     "refreshToken",
 		Value:    refreshToken,
-		Domain:   "eli5.club",
-		SameSite: "none",
+		SameSite: "Strict",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
 		HTTPOnly: true,
 	}
-	userState := fiber.Cookie{
-		Name:     "user",
-		Value:    uniqueAlias,
-		Domain:   "eli5.club",
-		SameSite: "none",
-		Secure:   true,
-		// Expires:  time.Now().Add(time.Hour * 168),
-		MaxAge:   60 * 60 * 24 * 7,
-		HTTPOnly: true,
-	}
-	loginState := fiber.Cookie{
-		Name:     "appState1",
+	appState := fiber.Cookie{
+		Name:     "appState",
 		Value:    "true",
-		Domain:   "eli5.club",
-		SameSite: "none",
+		SameSite: "Strict",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
 		HTTPOnly: true,
 	}
-	c.Cookie(&loginState)
-	c.Cookie(&userState)
+	c.Cookie(&appState)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
 
@@ -220,17 +191,6 @@ func UpdateUserProfile(c *fiber.Ctx) error {
 			// uniqueAlias exists already
 			return c.Status(400).SendString("exist")
 		}
-		userState := fiber.Cookie{
-			Name:     "user",
-			Value:    userData.UniqueAlias,
-			Domain:   "eli5.club",
-			SameSite: "none",
-			Secure:   true,
-			// Expires:  time.Now().Add(time.Hour * 168),
-			MaxAge:   60 * 60 * 24 * 7,
-			HTTPOnly: true,
-		}
-		c.Cookie(&userState)
 	}
 
 	query := bson.D{{Key: "_id", Value: id}}
@@ -244,7 +204,58 @@ func UpdateUserProfile(c *fiber.Ctx) error {
 }
 
 func GetUserDetails(c *fiber.Ctx) error {
-	var username = c.Params("username")
+
+	userId := c.Locals("userId").(string)
+
+	id, _ := primitive.ObjectIDFromHex(userId)
+
+	var user User
+
+	query := bson.D{{Key: "_id", Value: id}}
+	err := database.MG.Db.Collection("users").FindOne(c.Context(), query).Decode(&user)
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	currStreakTime := time.Now().Unix()
+
+	var limit48 int64 = 172800
+
+	if user.PrevStreakTime != 0 {
+
+		if (currStreakTime - user.PrevStreakTime) > limit48 {
+			user.Streak = 0
+			//update new value of streak  into user with id
+			query := bson.D{{Key: "_id", Value: id}}
+			updateQuery := bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: user.Streak}}}}
+			_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
+			if err != nil {
+				return c.Status(500).SendString(err.Error())
+			}
+		}
+	}
+
+	// userRank, err := database.Redis.Client.ZRevRank(c.Context(), "leaderboard", userId).Result()
+	// if err == redis.Nil {
+	// 	// this means we didn't got an data from redis and send user -1 to signal no data
+	// 	userRank = -1
+	// }
+	return c.JSON(&fiber.Map{
+		"userId":             user.Id,
+		"firstName":          user.FirstName,
+		"uniqueAlias":        user.UniqueAlias,
+		"profilePictureCode": user.ProfilePictureCode,
+		"streak":             user.Streak,
+		"totalLikes":         user.TotalLikes,
+		"totalAnswers":       user.TotalAnswers,
+
+		// "rank":               userRank,
+	})
+}
+
+func GetProfileDetails(c *fiber.Ctx) error {
+	username := c.Params("username")
 
 	var user User
 
@@ -263,7 +274,7 @@ func GetUserDetails(c *fiber.Ctx) error {
 
 		if (currStreakTime - user.PrevStreakTime) > limit48 {
 			user.Streak = 0
-			//update new value of streak  into user with uniqueAlias
+			//update new value of streak  into user with id
 			query := bson.D{{Key: "uniqueAlias", Value: username}}
 			updateQuery := bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: user.Streak}}}}
 			_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
@@ -311,13 +322,7 @@ func Logout(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	}
 	appStateCookie := fiber.Cookie{
-		Name:     "appState1",
-		Value:    "",
-		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-		HTTPOnly: true,
-	}
-	userCookie := fiber.Cookie{
-		Name:     "user",
+		Name:     "appState",
 		Value:    "",
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
@@ -329,7 +334,7 @@ func Logout(c *fiber.Ctx) error {
 	// 	HTTPOnly: false,
 	// }
 	// c.Cookie(&loginState)
-	c.Cookie(&userCookie)
+
 	c.Cookie(&appStateCookie)
 	c.Cookie(&accessTokenCookie)
 	c.Cookie(&refreshTokenCookie)
