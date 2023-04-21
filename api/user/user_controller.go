@@ -29,6 +29,20 @@ func GetLeaderBoard(c *fiber.Ctx) error {
 	return c.JSON(data)
 }
 
+func AuthCheck(c *fiber.Ctx) error {
+	refreshTokenCookie := c.Cookies("token")
+
+	if refreshTokenCookie == "" {
+		return c.JSON(&fiber.Map{
+			"auth": false,
+		})
+	} else {
+		return c.JSON(&fiber.Map{
+			"auth": true,
+		})
+	}
+}
+
 func UserCheck(c *fiber.Ctx) error {
 
 	userCheck := new(User)
@@ -43,7 +57,7 @@ func UserCheck(c *fiber.Ctx) error {
 			return c.Status(500).SendString(err.Error())
 		}
 		refreshTokenCookie := fiber.Cookie{
-			Name:     "Token",
+			Name:     "token",
 			Value:    refreshToken,
 			SameSite: "Lax",
 			Secure:   true,
@@ -94,7 +108,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 	refreshTokenCookie := fiber.Cookie{
-		Name:     "Token",
+		Name:     "token",
 		Value:    refreshToken,
 		SameSite: "Lax",
 		Secure:   true,
@@ -261,7 +275,7 @@ func Logout(c *fiber.Ctx) error {
 	// 	HTTPOnly: true,
 	// }
 	refreshTokenCookie := fiber.Cookie{
-		Name:     "Token",
+		Name:     "token",
 		Value:    "",
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
