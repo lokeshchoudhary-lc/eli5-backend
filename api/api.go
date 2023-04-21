@@ -32,6 +32,8 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/profileDetails/:username", user.GetProfileDetails)
 	v1.Post("/question/ask", question.AskQuestion)
 
+	v1.Get("/authCheck", user.AuthCheck)
+
 	//sse routes and login only
 	// /leaderboard all broadcast
 	// /details/:userId events: rank , likes? points?

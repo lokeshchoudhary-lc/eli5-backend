@@ -2,28 +2,46 @@ package middleware
 
 import (
 	"eli5/auth"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func AuthVerify(c *fiber.Ctx) error {
 
-	headers := c.GetReqHeaders()
-	authHeader := headers["Authorization"]
-	tokenSplit := strings.Split(authHeader, "Bearer ")
-	token := tokenSplit[1]
+	refreshTokenCookie := c.Cookies("token")
 
-	userId, err := auth.VerifyRefreshToken(token)
-
-	if err != nil {
+	if refreshTokenCookie == "" {
 		return c.Status(401).SendString("Unauthorized")
+	} else {
+		userId, err := auth.VerifyRefreshToken(refreshTokenCookie)
+
+		if err != nil {
+			return c.Status(401).SendString("Unauthorized")
+		}
+
+		c.Locals("userId", userId)
+		return c.Next()
 	}
 
-	c.Locals("userId", userId)
-	return c.Next()
-
 }
+
+// func AuthVerify(c *fiber.Ctx) error {
+
+// 	headers := c.GetReqHeaders()
+// 	authHeader := headers["Authorization"]
+// 	tokenSplit := strings.Split(authHeader, "Bearer ")
+// 	token := tokenSplit[1]
+
+// 	userId, err := auth.VerifyRefreshToken(token)
+
+// 	if err != nil {
+// 		return c.Status(401).SendString("Unauthorized")
+// 	}
+
+// 	c.Locals("userId", userId)
+// 	return c.Next()
+
+// }
 
 // accessTokenCookie := c.Cookies("accessToken")
 // refreshTokenCookie := c.Cookies("refreshToken")
