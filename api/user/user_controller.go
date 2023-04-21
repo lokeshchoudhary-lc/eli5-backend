@@ -59,8 +59,7 @@ func UserCheck(c *fiber.Ctx) error {
 		refreshTokenCookie := fiber.Cookie{
 			Name:     "token",
 			Value:    refreshToken,
-			Domain:   "eli5.club",
-			SameSite: "Strict",
+			SameSite: "Lax",
 			Secure:   true,
 			// Expires:  time.Now().Add(time.Hour * 168),
 			MaxAge:   60 * 60 * 24 * 7,
@@ -111,8 +110,7 @@ func CompleteProfile(c *fiber.Ctx) error {
 	refreshTokenCookie := fiber.Cookie{
 		Name:     "token",
 		Value:    refreshToken,
-		Domain:   "eli5.club",
-		SameSite: "Strict",
+		SameSite: "Lax",
 		Secure:   true,
 		// Expires:  time.Now().Add(time.Hour * 168),
 		MaxAge:   60 * 60 * 24 * 7,
