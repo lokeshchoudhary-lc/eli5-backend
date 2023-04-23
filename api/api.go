@@ -2,6 +2,7 @@ package api
 
 import (
 	"eli5/api/answer"
+	"eli5/api/company"
 	"eli5/api/feed"
 	"eli5/api/question"
 	"eli5/api/user"
@@ -14,7 +15,6 @@ func SetupApiRoutes(app *fiber.App) {
 
 	v1 := app.Group("/api/v1")
 
-	//prototype 3
 	//guest routes
 	v1.Get("/leaderboard", user.GetLeaderBoard)
 	v1.Get("/explore", question.Explore) // explore button (give all tags at once)
@@ -31,8 +31,18 @@ func SetupApiRoutes(app *fiber.App) {
 	// v1.Get("/userDetails/:username", user.GetProfileDetails)
 	v1.Get("/profileDetails/:username", user.GetProfileDetails)
 	v1.Post("/question/ask", question.AskQuestion)
-
 	v1.Get("/authCheck", user.AuthCheck)
+
+	//Comapny Routes
+	v1.Get("/company", company.GetCompanyList)
+	v1.Get("/company/:username", company.GetCompanyProfile)
+	v1.Get("/companyQuestions/:companyId", company.GetCompanyQuestions)
+	v1.Get("/companyCheck/:email", company.CompanyCheck)
+	v1.Get("/companyAuthCheck", company.CompanyAuthCheck)
+	v1.Put("/company", middleware.CompanyAuthVerify, company.UpdateCompanyProfile)
+	v1.Get("/getCompanyUniqueAlias", middleware.CompanyAuthVerify, company.GetCompanyUniqueAlias)
+	v1.Post("/company/like/:username", company.LikeCompany)
+	v1.Post("/company/completeProfile", company.CompleteCompanyProfile)
 
 	//sse routes and login only
 	// /leaderboard all broadcast

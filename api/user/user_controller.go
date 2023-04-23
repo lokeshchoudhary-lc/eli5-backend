@@ -225,24 +225,6 @@ func GetProfileDetails(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 
-	currStreakTime := time.Now().Unix()
-
-	var limit48 int64 = 172800
-
-	if user.PrevStreakTime != 0 {
-
-		if (currStreakTime - user.PrevStreakTime) > limit48 {
-			user.Streak = 0
-			//update new value of streak  into user with id
-			query := bson.D{{Key: "uniqueAlias", Value: username}}
-			updateQuery := bson.D{{Key: "$set", Value: bson.D{{Key: "streak", Value: user.Streak}}}}
-			_, err := database.MG.Db.Collection("users").UpdateOne(c.Context(), query, updateQuery)
-			if err != nil {
-				return c.Status(500).SendString(err.Error())
-			}
-		}
-	}
-
 	// userRank, err := database.Redis.Client.ZRevRank(c.Context(), "leaderboard", userId).Result()
 	// if err == redis.Nil {
 	// 	// this means we didn't got an data from redis and send user -1 to signal no data
@@ -280,6 +262,12 @@ func Logout(c *fiber.Ctx) error {
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
 	}
+	companyToken := fiber.Cookie{
+		Name:     "companyToken",
+		Value:    "",
+		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+		HTTPOnly: true,
+	}
 	// appStateCookie := fiber.Cookie{
 	// 	Name:     "appState",
 	// 	Value:    "",
@@ -296,6 +284,7 @@ func Logout(c *fiber.Ctx) error {
 
 	// c.Cookie(&appStateCookie)
 	// c.Cookie(&accessTokenCookie)
+	c.Cookie(&companyToken)
 	c.Cookie(&refreshTokenCookie)
 	return c.SendStatus(200)
 }
