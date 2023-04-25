@@ -24,6 +24,24 @@ func AuthVerify(c *fiber.Ctx) error {
 	}
 
 }
+func CompanyAuthVerify(c *fiber.Ctx) error {
+
+	refreshTokenCookie := c.Cookies("companyToken")
+
+	if refreshTokenCookie == "" {
+		return c.Status(401).SendString("Unauthorized")
+	} else {
+		userId, err := auth.VerifyRefreshToken(refreshTokenCookie)
+
+		if err != nil {
+			return c.Status(401).SendString("Unauthorized")
+		}
+
+		c.Locals("userId", userId)
+		return c.Next()
+	}
+
+}
 
 // func AuthVerify(c *fiber.Ctx) error {
 
