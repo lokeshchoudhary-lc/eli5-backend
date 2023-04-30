@@ -34,15 +34,17 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Get("/authCheck", user.AuthCheck)
 
 	//Comapny Routes
-	v1.Get("/company", company.GetCompanyList)
-	v1.Get("/company/:username", company.GetCompanyProfile)
-	v1.Get("/companyQuestions/:companyId", company.GetCompanyQuestions)
-	v1.Get("/companyCheck/:email", company.CompanyCheck)
-	v1.Get("/companyAuthCheck", company.CompanyAuthCheck)
-	v1.Put("/company", middleware.CompanyAuthVerify, company.UpdateCompanyProfile)
-	v1.Get("/getCompanyUniqueAlias", middleware.CompanyAuthVerify, company.GetCompanyUniqueAlias)
-	v1.Post("/company/like/:username", company.LikeCompany)
-	v1.Post("/company/completeProfile", company.CompleteCompanyProfile)
+	// v1.Get("/company", company.GetCompanyList)
+	// v1.Get("/company/:username", company.GetCompanyProfile)
+	// v1.Get("/companyQuestions/:companyId", company.GetCompanyQuestions)
+	// v1.Get("/companyCheck/:email", company.CompanyCheck)
+	// v1.Get("/companyAuthCheck", company.CompanyAuthCheck)
+	// v1.Get("/getCompanyUniqueAlias", middleware.CompanyAuthVerify, company.GetCompanyUniqueAlias)
+	// v1.Put("/company", middleware.CompanyAuthVerify, company.UpdateCompanyProfile)
+	// v1.Post("/company/like/:username", company.LikeCompany)
+	// v1.Post("/company/completeProfile", company.CompleteCompanyProfile)
+	// v1.Get("/companyAnswer/:questionId", company.GetCompanyAnswer)
+	// v1.Post("/companyAnswer/:questionId", middleware.CompanyAuthVerify, company.AnswerCompanyQuestion)
 
 	//sse routes and login only
 	// /leaderboard all broadcast
@@ -57,6 +59,7 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Put("/cancelLike/:answerId", middleware.AuthVerify, answer.CancelLike)
 	v1.Get("/userAnswer/:questionId", middleware.AuthVerify, answer.GetUserAnswer)
 	v1.Get("/logout", user.Logout)
+	v1.Get("/logout/company", company.Logout)
 
 	//SSE routes
 	// v1.Get("/sse/leaderboard", sse.LeaderboardSSE)

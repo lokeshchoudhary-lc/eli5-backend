@@ -262,12 +262,6 @@ func Logout(c *fiber.Ctx) error {
 		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		HTTPOnly: true,
 	}
-	companyToken := fiber.Cookie{
-		Name:     "companyToken",
-		Value:    "",
-		Expires:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
-		HTTPOnly: true,
-	}
 	// appStateCookie := fiber.Cookie{
 	// 	Name:     "appState",
 	// 	Value:    "",
@@ -284,7 +278,6 @@ func Logout(c *fiber.Ctx) error {
 
 	// c.Cookie(&appStateCookie)
 	// c.Cookie(&accessTokenCookie)
-	c.Cookie(&companyToken)
 	c.Cookie(&refreshTokenCookie)
 	return c.SendStatus(200)
 }
