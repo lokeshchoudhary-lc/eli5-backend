@@ -26,6 +26,63 @@ func GetQuestion(c *fiber.Ctx) error {
 	return c.JSON(question)
 }
 
+func GetTrendingTags(c *fiber.Ctx) error {
+	type topTags struct {
+		Id string `json:"id" bson:"_id"`
+	}
+
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: "$tag"},
+			{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
+		}}}
+	sortStage := bson.D{{Key: "$sort", Value: bson.D{{Key: "count", Value: -1}}}}
+	unsetStage := bson.D{{Key: "$unset", Value: bson.A{"count"}}}
+	limitStage := bson.D{{Key: "$limit", Value: 5}}
+
+	cursor, err := database.MG.Db.Collection("questions").Aggregate(c.Context(), mongo.Pipeline{groupStage, sortStage, unsetStage, limitStage})
+
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	var results []topTags = make([]topTags, 0)
+
+	if err := cursor.All(c.Context(), &results); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	return c.JSON(results)
+}
+
+func GetAllQuestions(c *fiber.Ctx) error {
+
+	opts := options.Find()
+
+	var perPageItem int64 = 20
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	opts.SetSort(bson.D{{Key: "_id", Value: -1}})
+	opts.SetLimit(perPageItem)
+	opts.SetSkip((int64(page) - 1) * perPageItem)
+
+	query := bson.D{{}}
+
+	cursor, err := database.MG.Db.Collection("questions").Find(c.Context(), query, opts)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	var questions []Question = make([]Question, 0)
+
+	if err := cursor.All(c.Context(), &questions); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	if length := len(questions); length == 0 {
+		return c.SendStatus(204)
+	}
+	return c.JSON(questions)
+}
+
 func AskQuestion(c *fiber.Ctx) error {
 	askedQuestion := new(AskedQuestion)
 
@@ -145,6 +202,30 @@ func GetQuestionsOfTag(c *fiber.Ctx) error {
 	if length := len(questions); length == 0 {
 		return c.SendStatus(204)
 	}
+	return c.JSON(questions)
+}
+
+func GetBacklinkQuestionsOfTag(c *fiber.Ctx) error {
+	tag := c.Params("tag")
+
+	opts := options.Find()
+
+	var perPageItem int64 = 10
+	opts.SetSort(bson.D{{Key: "_id", Value: -1}})
+	opts.SetLimit(perPageItem)
+
+	query := bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "choosen", Value: true}}, bson.D{{Key: "tag", Value: tag}}}}}
+
+	cursor, err := database.MG.Db.Collection("questions").Find(c.Context(), query, opts)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	var questions []Question = make([]Question, 0)
+
+	if err := cursor.All(c.Context(), &questions); err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
 	return c.JSON(questions)
 }
 

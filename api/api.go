@@ -33,6 +33,11 @@ func SetupApiRoutes(app *fiber.App) {
 	v1.Post("/question/ask", question.AskQuestion)
 	v1.Get("/authCheck", user.AuthCheck)
 
+	//new landing page
+	v1.Get("/allQuestions", question.GetAllQuestions)
+	v1.Get("/trendingTags", question.GetTrendingTags)
+	v1.Get("/backlinkQuestions/:tag", question.GetBacklinkQuestionsOfTag)
+
 	//Comapny Routes
 	v1.Get("/company", company.GetCompanyList)
 	v1.Get("/company/:username", company.GetCompanyProfile)
