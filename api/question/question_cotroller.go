@@ -59,7 +59,7 @@ func GetAllQuestions(c *fiber.Ctx) error {
 
 	opts := options.Find()
 
-	var perPageItem int64 = 3
+	var perPageItem int64 = 20
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	opts.SetSort(bson.D{{Key: "_id", Value: -1}})
 	opts.SetLimit(perPageItem)
